@@ -57,12 +57,12 @@ export function NurbsSurface({
         return (i - degreeV) / (numKnotsV - 2 * degreeV - 1);
       });
 
-    const verbSurface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
-      degreeU,
-      degreeV,
-      knotsU,
-      knotsV,
-      controlPoints,
+      const verbSurface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+        degreeU,
+        degreeV,
+        knotsU,
+        knotsV,
+        controlPoints,
       weights
     );
 
@@ -104,8 +104,8 @@ export function NurbsSurface({
 
         positions.push(...point);
         normals.push(...normalizedNormal);
+        }
       }
-    }
 
     // Create indices for triangles
     for (let i = 0; i < uSegments; i++) {
@@ -117,8 +117,8 @@ export function NurbsSurface({
 
         indices.push(a, b, c);
         indices.push(b, d, c);
+        }
       }
-    }
 
     geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
     geometry.setAttribute("normal", new Float32BufferAttribute(normals, 3));
@@ -171,13 +171,13 @@ export function NurbsSurface({
       return null;
     }
 
-    return (
+  return (
       <mesh {...meshProps}>
         <primitive object={geometry} attach="geometry" />
         {children}
-      </mesh>
+    </mesh>
     );
   }
 
   return null;
-}
+} 

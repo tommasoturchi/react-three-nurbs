@@ -97,7 +97,7 @@ export const ExampleLoft: Story = {
   },
   render: (args) => (
     <>
-      <LoftedSurface {...args} />
+      <LoftedSurface key={JSON.stringify(args)} {...args} />
       {curves.map((curve) => (
         <NurbsCurve
           key={`display-${curve.key}`}
