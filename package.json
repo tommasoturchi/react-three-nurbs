@@ -23,8 +23,30 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "storybook": "npx storybook dev -p 6006",
-    "build-storybook": "npx storybook build"
+    "build-storybook": "npx storybook build",
+    "prepublishOnly": "npm run build",
+    "preversion": "npm run lint"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tommasoturchi/react-three-nurbs.git"
+  },
+  "keywords": [
+    "react",
+    "three.js",
+    "react-three-fiber",
+    "nurbs",
+    "curves",
+    "surfaces",
+    "3d"
+  ],
+  "bugs": {
+    "url": "https://github.com/tommasoturchi/react-three-nurbs/issues"
+  },
+  "homepage": "https://react-three-nurbs.trx.li/",
   "dependencies": {
     "@react-three/drei": "^9.99.0",
     "@react-three/fiber": "^8.15.16",
