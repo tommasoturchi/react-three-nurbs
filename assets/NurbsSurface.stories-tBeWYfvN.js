@@ -4,7 +4,7 @@ import{j as s}from"./jsx-runtime-DiklIkkE.js";import{u as ne,v as oe,B as ae,F a
     weights,
     degreeU: 2,
     degreeV: 2,
-    color: '#ff0000',
+    color: "#ff0000",
     wireframe: false
   }
 }`,...(k=(U=S.parameters)==null?void 0:U.docs)==null?void 0:k.source}}};var D,F,G;y.parameters={...y.parameters,docs:{...(D=y.parameters)==null?void 0:D.docs,source:{originalSource:`{
