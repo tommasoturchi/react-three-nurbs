@@ -1,20 +1,19 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
-import { NurbsSurface } from '../components/NurbsSurface'
-import type { ReactNode } from 'react'
-import { MeshStandardMaterial, MeshPhongMaterial } from 'three'
+import type { Meta, StoryObj } from "@storybook/react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { NurbsSurface } from "../components/NurbsSurface";
+import type { ReactNode } from "react";
 
 const meta = {
-  title: 'Components/NurbsSurface',
+  title: "Components/NurbsSurface",
   component: NurbsSurface,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story: () => ReactNode) => (
-      <div style={{ width: '100%', height: '100%' }}>
+      <div style={{ width: "100%", height: "100%" }}>
         <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
@@ -24,10 +23,10 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof NurbsSurface>
+} satisfies Meta<typeof NurbsSurface>;
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 // Sample control points for a simple surface
 const controlPoints = [
@@ -46,13 +45,13 @@ const controlPoints = [
     [1, 2, 0],
     [2, 2, 0],
   ],
-]
+];
 
 const weights = [
   [1, 1, 1],
   [1, 1, 1],
   [1, 1, 1],
-]
+];
 
 // Simple flat surface with default material
 export const SimpleSurface: Story = {
@@ -61,10 +60,10 @@ export const SimpleSurface: Story = {
     weights,
     degreeU: 2,
     degreeV: 2,
-    color: '#ff0000',
+    color: "#ff0000",
     wireframe: false,
-  }
-}
+  },
+};
 
 // Surface with a bulge in the middle and custom material
 export const BulgedSurface: Story = {
@@ -97,8 +96,8 @@ export const BulgedSurface: Story = {
         wireframe={true}
       />
     ),
-  }
-}
+  },
+};
 
 // Surface with custom material and R3F props
 export const CustomMaterialSurface: Story = {
@@ -118,5 +117,5 @@ export const CustomMaterialSurface: Story = {
         wireframe={false}
       />
     ),
-  }
-}
+  },
+};

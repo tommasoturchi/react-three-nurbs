@@ -1,9 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
-import { LoftedSurface } from '../components/LoftedSurface'
-import { NurbsCurve } from '../components/NurbsCurve'
-import type { ReactNode } from 'react'
+import type { Meta, StoryObj } from "@storybook/react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { LoftedSurface } from "../components/LoftedSurface";
+import { NurbsCurve } from "../components/NurbsCurve";
+import type { ReactNode } from "react";
 
 const curves = [
   {
@@ -11,11 +11,11 @@ const curves = [
     points: [
       [0, 0, 0],
       [10, 0, 0],
-      [40, 0, 0]
+      [40, 0, 0],
     ],
     degree: 2,
     knots: [0, 0, 0, 1, 1, 1],
-    weights: [1, 1, 1]
+    weights: [1, 1, 1],
   },
   {
     key: "curve2",
@@ -23,11 +23,11 @@ const curves = [
       [0, 10, 10],
       [10, 5, 10],
       [20, -5, 10],
-      [40, 10, 10]
+      [40, 10, 10],
     ],
     degree: 3,
     knots: [0, 0, 0, 0, 1, 1, 1, 1],
-    weights: [1, 1, 1, 1]
+    weights: [1, 1, 1, 1],
   },
   {
     key: "curve3",
@@ -35,11 +35,11 @@ const curves = [
       [0, 0, 20],
       [10, 0, 20],
       [20, 5, 20],
-      [40, 0, 20]
+      [40, 0, 20],
     ],
     degree: 3,
     knots: [0, 0, 0, 0, 1, 1, 1, 1],
-    weights: [1, 1, 1, 1]
+    weights: [1, 1, 1, 1],
   },
   {
     key: "curve4",
@@ -47,24 +47,24 @@ const curves = [
       [0, 3, 30],
       [10, -4, 30],
       [20, 10, 30],
-      [40, 0, 30]
+      [40, 0, 30],
     ],
     degree: 3,
     knots: [0, 0, 0, 0, 1, 1, 1, 1],
-    weights: [1, 1, 1, 1]
-  }
-]
+    weights: [1, 1, 1, 1],
+  },
+];
 
 const meta = {
-  title: 'Components/LoftedSurface',
+  title: "Components/LoftedSurface",
   component: LoftedSurface,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story: () => ReactNode) => (
-      <div style={{ width: '100%', height: '100%' }}>
+      <div style={{ width: "100%", height: "100%" }}>
         <Canvas camera={{ position: [20, 20, 20], fov: 50 }}>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
@@ -74,18 +74,18 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof LoftedSurface>
+} satisfies Meta<typeof LoftedSurface>;
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const ExampleLoft: Story = {
   args: {
     resolutionU: 20,
     resolutionV: 20,
-    color: '#ff0000',
+    color: "#ff0000",
     wireframe: true,
-    children: curves.map(curve => (
+    children: curves.map((curve) => (
       <NurbsCurve
         key={curve.key}
         points={curve.points}
@@ -93,12 +93,12 @@ export const ExampleLoft: Story = {
         knots={curve.knots}
         weights={curve.weights}
       />
-    ))
+    )),
   },
   render: (args) => (
     <>
       <LoftedSurface {...args} />
-      {curves.map(curve => (
+      {curves.map((curve) => (
         <NurbsCurve
           key={`display-${curve.key}`}
           points={curve.points}
@@ -110,5 +110,5 @@ export const ExampleLoft: Story = {
         />
       ))}
     </>
-  )
-} 
+  ),
+};

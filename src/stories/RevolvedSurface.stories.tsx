@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
-import { RevolvedSurface } from '../components/RevolvedSurface'
-import { NurbsCurve } from '../components/NurbsCurve'
+import type { Meta, StoryObj } from "@storybook/react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { RevolvedSurface } from "../components/RevolvedSurface";
+import { NurbsCurve } from "../components/NurbsCurve";
 
 const meta = {
-  title: 'Components/RevolvedSurface',
+  title: "Components/RevolvedSurface",
   component: RevolvedSurface,
   parameters: {
-    layout: 'fullscreen'
+    layout: "fullscreen",
   },
   decorators: [
     (Story) => (
@@ -18,12 +18,12 @@ const meta = {
         <Story />
         <OrbitControls />
       </Canvas>
-    )
-  ]
-} satisfies Meta<typeof RevolvedSurface>
+    ),
+  ],
+} satisfies Meta<typeof RevolvedSurface>;
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
@@ -32,7 +32,7 @@ export const Default: Story = {
     angle: 2 * Math.PI,
     resolutionU: 20,
     resolutionV: 20,
-    color: '#ff0000',
+    color: "#ff0000",
     wireframe: false,
     children: (
       <NurbsCurve
@@ -40,28 +40,28 @@ export const Default: Story = {
           [0, 0, 0],
           [0, 1, 0],
           [1, 1, 0],
-          [1, 0, 0]
+          [1, 0, 0],
         ]}
         degree={3}
         knots={[0, 0, 0, 0, 1, 1, 1, 1]}
       />
-    )
-  }
-}
+    ),
+  },
+};
 
 export const WithWireframe: Story = {
   args: {
     ...Default.args,
-    wireframe: true
-  }
-}
+    wireframe: true,
+  },
+};
 
 export const PartialRevolution: Story = {
   args: {
     ...Default.args,
-    angle: Math.PI
-  }
-}
+    angle: Math.PI,
+  },
+};
 
 export const CustomAxis: Story = {
   args: {
@@ -73,11 +73,11 @@ export const CustomAxis: Story = {
           [0, 0, 0],
           [0, 0, 1],
           [1, 0, 1],
-          [1, 0, 0]
+          [1, 0, 0],
         ]}
         degree={3}
         knots={[0, 0, 0, 0, 1, 1, 1, 1]}
       />
-    )
-  }
-} 
+    ),
+  },
+};

@@ -1,4 +1,4 @@
-declare module 'verb-nurbs' {
+declare module "verb-nurbs" {
   namespace verb {
     namespace geom {
       class NurbsCurve {
@@ -19,7 +19,10 @@ declare module 'verb-nurbs' {
           controlPoints: number[][][],
           weights: number[][]
         ): NurbsSurface;
-        static byLoftingCurves(curves: NurbsCurve[], degreeV: number): NurbsSurface;
+        static byLoftingCurves(
+          curves: NurbsCurve[],
+          degreeV: number
+        ): NurbsSurface;
         point(u: number, v: number): number[];
       }
       class RevolvedSurface {
@@ -35,4 +38,4 @@ declare module 'verb-nurbs' {
   }
   const verb: typeof verb;
   export default verb;
-} 
+}
