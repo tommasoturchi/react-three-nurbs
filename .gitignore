@@ -28,3 +28,6 @@ dist-ssr
 # TypeScript cache
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+
+# Storybook
+storybook-static/
