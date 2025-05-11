@@ -23,8 +23,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "storybook": "npx storybook dev -p 6006",
-    "build-storybook": "npx storybook build",
-    "deploy-storybook": "storybook-to-ghpages"
+    "build-storybook": "npx storybook build"
   },
   "dependencies": {
     "@react-three/drei": "^9.99.0",
@@ -54,8 +53,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "typescript": "^5.2.2",
-    "vite": "^5.1.0",
-    "storybook-to-ghpages": "^1.0.0"
+    "vite": "^5.1.0"
   },
   "peerDependencies": {
     "react": "^18.2.0",
