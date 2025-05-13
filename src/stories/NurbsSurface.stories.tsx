@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import { DoubleSide } from "three";
 import { NurbsSurface } from "../components/NurbsSurface";
 import type { ReactNode } from "react";
 
@@ -61,7 +62,8 @@ export const SimpleSurface: Story = {
     degreeU: 2,
     degreeV: 2,
     color: "#ff0000",
-    wireframe: false,
+    wireframe: true,
+    children: <meshStandardMaterial color="#ff0000" wireframe={true} side={DoubleSide} />,
   },
 };
 
@@ -94,6 +96,7 @@ export const BulgedSurface: Story = {
         metalness={0.5}
         roughness={0.5}
         wireframe={true}
+        side={DoubleSide}
       />
     ),
   },
@@ -114,7 +117,7 @@ export const CustomMaterialSurface: Story = {
         color="#0000ff"
         shininess={100}
         specular="#ffffff"
-        wireframe={false}
+        side={DoubleSide}
       />
     ),
   },

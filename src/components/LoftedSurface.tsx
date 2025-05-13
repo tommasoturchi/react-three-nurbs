@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import verb from "verb-nurbs";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
+import { DoubleSide } from "three";
 
 export interface LoftedSurfaceProps {
   degreeV?: number;
@@ -120,7 +121,7 @@ export const LoftedSurface = ({
       {materialChild ? (
         materialChild
       ) : (
-        <meshStandardMaterial color={color} wireframe={wireframe} />
+        <meshStandardMaterial color={color} wireframe={wireframe} side={DoubleSide} />
       )}
     </mesh>
   );

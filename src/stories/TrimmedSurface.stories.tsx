@@ -35,7 +35,7 @@ const meta = {
   argTypes: {
     color: { control: "color" },
     wireframe: { control: "boolean" },
-    scale: { control: { type: "range", min: 0.1, max: 0.7, step: 0.01 } },
+    scale: { control: { type: "range", min: 0.1, max: 1, step: 0.01 } },
   },
 } satisfies Meta<typeof TrimmedSurface>;
 
@@ -128,8 +128,8 @@ export const TrimmedBulgedSurface: Story = {
   render: ({ color = "#ff0000", wireframe = false, scale = 0.35 }) => {
     const basePoints = createCircularCurveUV(0.5, [0.5, 0.5], 4).points;
     const trim: [number, number][] = basePoints.map(([u, v]) => [
-      (u - 0.5) * scale + 0.5,
-      (v - 0.5) * scale + 0.5,
+      (u - 0.5) * Number(scale) + 0.5,
+      (v - 0.5) * Number(scale) + 0.5,
     ]);
     const knots = Array(trim.length + 3)
       .fill(0)
@@ -204,8 +204,8 @@ export const TrimmedFlatEllipticalSurface: Story = {
       (_, i) => {
         const angle = (i / numPoints) * Math.PI * 2;
         return [
-          0.5 + scale * 0.5 * Math.cos(angle),
-          0.5 + scale * 0.25 * Math.sin(angle),
+          0.5 + Number(scale) * 0.5 * Math.cos(angle),
+          0.5 + Number(scale) * 0.25 * Math.sin(angle),
         ] as [number, number];
       }
     );
@@ -282,12 +282,12 @@ export const TrimmedSurfaceWithHole: Story = {
     const baseOuter = createCircularCurveUV(0.5, [0.5, 0.5], 6).points;
     const baseHole = createCircularCurveUV(0.5, [0.5, 0.5], 6).points;
     const outer: [number, number][] = baseOuter.map(([u, v]) => [
-      (u - 0.5) * scale + 0.5,
-      (v - 0.5) * scale + 0.5,
+      (u - 0.5) * Number(scale) + 0.5,
+      (v - 0.5) * Number(scale) + 0.5,
     ]);
     const hole: [number, number][] = baseHole.map(([u, v]) => [
-      (u - 0.5) * (scale * 0.33) + 0.5,
-      (v - 0.5) * (scale * 0.33) + 0.5,
+      (u - 0.5) * (Number(scale) * 0.33) + 0.5,
+      (v - 0.5) * (Number(scale) * 0.33) + 0.5,
     ]);
 
     const surface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
@@ -400,8 +400,8 @@ export const TrimmedSurfaceClosedLoop: Story = {
       (_, i) => {
         const angle = (i / numPoints) * Math.PI * 2;
         return [
-          center[0] + scale * 0.5 * Math.cos(angle),
-          center[1] + scale * 0.5 * Math.sin(angle),
+          center[0] + Number(scale) * 0.5 * Math.cos(angle),
+          center[1] + Number(scale) * 0.5 * Math.sin(angle),
         ] as [number, number];
       }
     );

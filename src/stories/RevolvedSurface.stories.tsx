@@ -33,7 +33,7 @@ export const Default: Story = {
     resolutionU: 20,
     resolutionV: 20,
     color: "#ff0000",
-    wireframe: false,
+    wireframe: true,
     children: (
       <NurbsCurve
         points={[
@@ -46,13 +46,6 @@ export const Default: Story = {
         knots={[0, 0, 0, 0, 1, 1, 1, 1]}
       />
     ),
-  },
-};
-
-export const WithWireframe: Story = {
-  args: {
-    ...Default.args,
-    wireframe: true,
   },
 };
 

@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import verb from "verb-nurbs";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
+import { DoubleSide } from "three";
 
 export interface RevolvedSurfaceProps {
   center?: [number, number, number];
@@ -137,7 +138,7 @@ export const RevolvedSurface = ({
           itemSize={1}
         />
       </bufferGeometry>
-      <meshStandardMaterial color={color} wireframe={wireframe} />
+      <meshStandardMaterial color={color} wireframe={wireframe} side={DoubleSide} />
     </mesh>
   );
 };
