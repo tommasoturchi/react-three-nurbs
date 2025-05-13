@@ -1,0 +1,23 @@
+import{j as e}from"./jsx-runtime-DiklIkkE.js";import{v as C,D as K,C as U,O as $}from"./verb.es-vEISxjAU.js";import{r as S}from"./index-DRjF_FHU.js";import{N as h}from"./NurbsCurve-B3syIbAM.js";const I=({center:m=[0,0,0],axis:r=[1,0,0],angle:y=2*Math.PI,resolutionU:d=20,resolutionV:o=20,color:D="#ff0000",wireframe:V=!1,children:p})=>{const n=S.useMemo(()=>{if(!S.isValidElement(p)||p.type!==h)return console.error("RevolvedSurface requires a single NurbsCurve child"),null;try{const{points:u,degree:k=3,weights:z,knots:_}=p.props,L=Array(u.length).fill(1);if(!u||u.length<2)return console.error("Profile curve must have at least 2 points"),null;const f=Math.sqrt(r[0]*r[0]+r[1]*r[1]+r[2]*r[2]);if(f===0)return console.error("Axis vector cannot be zero"),null;const O=[r[0]/f,r[1]/f,r[2]/f],F=C.geom.NurbsCurve.byKnotsControlPointsWeights(k,_,u,z??L),W=new C.geom.RevolvedSurface(F,m,O,y),x=[],b=[],j=[];for(let t=0;t<=d;t++)for(let s=0;s<=o;s++){const i=t/d,c=s/o,a=W.point(i,c);x.push(a[0],a[1],a[2]),j.push(i,c)}for(let t=0;t<d;t++)for(let s=0;s<o;s++){const i=t*(o+1)+s,c=i+1,a=(t+1)*(o+1)+s,G=a+1;b.push(i,c,a),b.push(c,G,a)}return{vertices:x,indices:b,uvs:j}}catch(u){return console.error("Error creating revolved surface:",u),null}},[p,m,r,y,d,o]);return n?e.jsxs("mesh",{children:[e.jsxs("bufferGeometry",{children:[e.jsx("bufferAttribute",{attach:"attributes-position",count:n.vertices.length/3,array:new Float32Array(n.vertices),itemSize:3}),e.jsx("bufferAttribute",{attach:"attributes-uv",count:n.uvs.length/2,array:new Float32Array(n.uvs),itemSize:2}),e.jsx("bufferAttribute",{attach:"index",count:n.indices.length,array:new Uint32Array(n.indices),itemSize:1})]}),e.jsx("meshStandardMaterial",{color:D,wireframe:V,side:K})]}):null};I.__docgenInfo={description:"",methods:[],displayName:"RevolvedSurface",props:{center:{required:!1,tsType:{name:"tuple",raw:"[number, number, number]",elements:[{name:"number"},{name:"number"},{name:"number"}]},description:"",defaultValue:{value:"[0, 0, 0]",computed:!1}},axis:{required:!1,tsType:{name:"tuple",raw:"[number, number, number]",elements:[{name:"number"},{name:"number"},{name:"number"}]},description:"",defaultValue:{value:"[1, 0, 0]",computed:!1}},angle:{required:!1,tsType:{name:"number"},description:"",defaultValue:{value:"2 * Math.PI",computed:!1}},resolutionU:{required:!1,tsType:{name:"number"},description:"",defaultValue:{value:"20",computed:!1}},resolutionV:{required:!1,tsType:{name:"number"},description:"",defaultValue:{value:"20",computed:!1}},color:{required:!1,tsType:{name:"string"},description:"",defaultValue:{value:'"#ff0000"',computed:!1}},wireframe:{required:!1,tsType:{name:"boolean"},description:"",defaultValue:{value:"false",computed:!1}},children:{required:!0,tsType:{name:"ReactElement",elements:[{name:"NurbsCurveProps"}],raw:"ReactElement<NurbsCurveProps>"},description:""}}};const X={title:"Components/RevolvedSurface",component:I,parameters:{layout:"fullscreen"},decorators:[m=>e.jsxs(U,{camera:{position:[5,5,5],fov:75},children:[e.jsx("ambientLight",{intensity:.5}),e.jsx("pointLight",{position:[10,10,10]}),e.jsx(m,{}),e.jsx($,{})]})]},l={args:{center:[0,0,0],axis:[0,1,0],angle:2*Math.PI,resolutionU:20,resolutionV:20,color:"#ff0000",wireframe:!0,children:e.jsx(h,{points:[[0,0,0],[0,1,0],[1,1,0],[1,0,0]],degree:3,knots:[0,0,0,0,1,1,1,1]})}},v={args:{...l.args,angle:Math.PI}},g={args:{...l.args,axis:[1,1,0],children:e.jsx(h,{points:[[0,0,0],[0,0,1],[1,0,1],[1,0,0]],degree:3,knots:[0,0,0,0,1,1,1,1]})}};var P,w,A;l.parameters={...l.parameters,docs:{...(P=l.parameters)==null?void 0:P.docs,source:{originalSource:`{
+  args: {
+    center: [0, 0, 0],
+    axis: [0, 1, 0],
+    angle: 2 * Math.PI,
+    resolutionU: 20,
+    resolutionV: 20,
+    color: "#ff0000",
+    wireframe: true,
+    children: <NurbsCurve points={[[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]} degree={3} knots={[0, 0, 0, 0, 1, 1, 1, 1]} />
+  }
+}`,...(A=(w=l.parameters)==null?void 0:w.docs)==null?void 0:A.source}}};var q,R,M;v.parameters={...v.parameters,docs:{...(q=v.parameters)==null?void 0:q.docs,source:{originalSource:`{
+  args: {
+    ...Default.args,
+    angle: Math.PI
+  }
+}`,...(M=(R=v.parameters)==null?void 0:R.docs)==null?void 0:M.source}}};var N,T,E;g.parameters={...g.parameters,docs:{...(N=g.parameters)==null?void 0:N.docs,source:{originalSource:`{
+  args: {
+    ...Default.args,
+    axis: [1, 1, 0],
+    children: <NurbsCurve points={[[0, 0, 0], [0, 0, 1], [1, 0, 1], [1, 0, 0]]} degree={3} knots={[0, 0, 0, 0, 1, 1, 1, 1]} />
+  }
+}`,...(E=(T=g.parameters)==null?void 0:T.docs)==null?void 0:E.source}}};const Y=["Default","PartialRevolution","CustomAxis"];export{g as CustomAxis,l as Default,v as PartialRevolution,Y as __namedExportsOrder,X as default};
