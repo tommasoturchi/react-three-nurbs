@@ -6,6 +6,9 @@ A React component library for rendering NURBS (Non-Uniform Rational B-Spline) su
 
 - 🎯 Simple React component API for NURBS surfaces
 - 📐 Support for arbitrary degree NURBS surfaces
+- ✂️ Trimmed surfaces with multiple trimming curves
+- 🔄 Revolved surfaces with custom axes
+- 📈 Lofted surfaces from multiple curves
 - 🎨 Customizable surface appearance with R3F materials
 - 🔄 Automatic normal calculation for proper lighting
 - 🎮 Interactive 3D visualization with React Three Fiber
@@ -133,6 +136,57 @@ function App() {
 }
 ```
 
+### Trimmed Surface
+
+```tsx
+import { TrimmedSurface, NurbsSurface, NurbsCurve } from 'react-three-nurbs'
+import { Canvas } from '@react-three/fiber'
+import { DoubleSide } from 'three'
+
+function App() {
+  // Define control points for the base surface
+  const controlPoints = [
+    [[0, 0, 0], [1, 0, 0], [2, 0, 0]],
+    [[0, 1, 0], [1, 1, 1], [2, 1, 0]],
+    [[0, 2, 0], [1, 2, 0], [2, 2, 0]]
+  ]
+  const weights = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+
+  // Define trimming curve in UV space
+  const trimPoints = [
+    [0.2, 0.2],
+    [0.8, 0.2],
+    [0.8, 0.8],
+    [0.2, 0.8]
+  ]
+  const knots = [0, 0, 0, 0, 1, 1, 1, 1]
+
+  return (
+    <Canvas>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} />
+      <TrimmedSurface>
+        <NurbsSurface
+          controlPoints={controlPoints}
+          weights={weights}
+          degreeU={2}
+          degreeV={2}
+        />
+        <NurbsCurve
+          points={trimPoints}
+          knots={knots}
+          degree={3}
+        />
+        <meshPhongMaterial
+          color="#ff0000"
+          side={DoubleSide}
+        />
+      </TrimmedSurface>
+    </Canvas>
+  )
+}
+```
+
 ## Props
 
 ### NurbsSurface Props
@@ -162,6 +216,18 @@ function App() {
 | `dashed` | `boolean` | No | `false` | Whether to render as dashed line |
 | `vertexColors` | `number[][]` | No | - | RGB colors for each vertex |
 | `...lineProps` | `LineProps` | No | - | All drei Line component props are supported |
+
+### TrimmedSurface Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `children` | `ReactElement[]` | Yes | - | Must contain exactly one `NurbsSurface`, one or more `NurbsCurve` components for trimming, and one material component |
+| `...meshProps` | `MeshProps` | No | - | All React Three Fiber mesh props are supported |
+
+The `TrimmedSurface` component requires its children to be in this specific order:
+1. A `NurbsSurface` component defining the base surface
+2. One or more `NurbsCurve` components defining the trimming curves (in UV space)
+3. A material component (e.g., `meshStandardMaterial`, `meshPhongMaterial`)
 
 ## Development
 
