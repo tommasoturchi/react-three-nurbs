@@ -2,6 +2,8 @@
 
 A React component library for rendering NURBS (Non-Uniform Rational B-Spline) surfaces in Three.js. Built with React Three Fiber, this library provides an easy way to create and visualize complex curved surfaces in your 3D applications.
 
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/tommasoturchi)
+
 ## Features
 
 - 🎯 Simple React component API for NURBS surfaces
