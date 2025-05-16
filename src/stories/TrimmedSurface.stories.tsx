@@ -1,29 +1,41 @@
+import { DoubleSide, Vector3 } from "three";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Line } from "@react-three/drei";
-import { DoubleSide } from "three";
+import { OrbitControls } from "@react-three/drei";
 import { TrimmedSurface } from "../components/TrimmedSurface";
-import { sampleNurbsCurve2D } from "../utils/nurbs";
 import { NurbsSurface } from "../components/NurbsSurface";
 import { NurbsCurve } from "../components/NurbsCurve";
+import { Line } from "@react-three/drei";
 import verb from "verb-nurbs";
+import { sampleNurbsCurve2D } from "../utils/nurbs";
 
-interface StoryProps {
+type BaseProps = {
   color?: string;
   wireframe?: boolean;
+  trimCurveResolution?: number;
+  adaptiveMaxAngleDeg?: number;
+  adaptiveMaxDepth?: number;
+  world?: boolean;
+};
+
+type WorldSpaceProps = BaseProps & {
   scale: number;
-}
+  curveX: number;
+  curveY: number;
+};
+
+type Props = BaseProps | WorldSpaceProps;
 
 const meta = {
   title: "Components/TrimmedSurface",
   component: TrimmedSurface,
   parameters: {
-    layout: "fullscreen",
+    layout: "centered",
   },
   decorators: [
     (Story) => (
       <div style={{ width: "100vw", height: "100vh" }}>
-        <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
+        <Canvas camera={{ position: [2, 2, 2], fov: 50 }}>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
           <Story />
@@ -33,14 +45,48 @@ const meta = {
     ),
   ],
   argTypes: {
-    color: { control: "color" },
-    wireframe: { control: "boolean" },
-    scale: { control: { type: "range", min: 0.1, max: 1, step: 0.01 } },
+    color: {
+      control: "color",
+      description: "Color of the trimmed surface",
+    },
+    wireframe: {
+      control: "boolean",
+      description: "Whether to show the surface as wireframe",
+    },
+    trimCurveResolution: {
+      control: { type: "range", min: 10, max: 500, step: 10 },
+      description: "Number of points to sample along the trimming curve",
+    },
+    adaptiveMaxAngleDeg: {
+      control: { type: "range", min: 1, max: 45, step: 1 },
+      description: "Maximum angle between adjacent triangles in degrees",
+    },
+    adaptiveMaxDepth: {
+      control: { type: "range", min: 1, max: 20, step: 1 },
+      description: "Maximum recursion depth for adaptive tessellation",
+    },
+    world: {
+      control: "boolean",
+      description: "Whether the trimming curve is in world space or UV space",
+    },
+    scale: {
+      control: { type: "range", min: 0.1, max: 1, step: 0.1 },
+      description: "Scale of the trimming curve",
+    },
+    curveX: {
+      control: { type: "range", min: 0, max: 2, step: 0.1 },
+      description: "X position of the trimming curve center",
+    },
+    curveY: {
+      control: { type: "range", min: 0, max: 2, step: 0.1 },
+      description: "Y position of the trimming curve center",
+    },
   },
-} satisfies Meta<typeof TrimmedSurface>;
+} satisfies Meta<Props>;
 
 export default meta;
-type Story = StoryObj<typeof meta & StoryProps>;
+
+type Story = StoryObj<Props>;
 
 // Shared control points
 const controlPoints = [
@@ -124,8 +170,18 @@ export const TrimmedBulgedSurface: Story = {
     color: "#ff0000",
     wireframe: false,
     scale: 0.35,
+    trimCurveResolution: 200,
+    adaptiveMaxAngleDeg: 5,
+    adaptiveMaxDepth: 10,
   },
-  render: ({ color = "#ff0000", wireframe = false, scale = 0.35 }) => {
+  render: ({
+    color = "#ff0000",
+    wireframe = false,
+    scale = 0.35,
+    trimCurveResolution = 200,
+    adaptiveMaxAngleDeg = 5,
+    adaptiveMaxDepth = 10,
+  }) => {
     const basePoints = createCircularCurveUV(0.5, [0.5, 0.5], 4).points;
     const trim: [number, number][] = basePoints.map(([u, v]) => [
       (u - 0.5) * Number(scale) + 0.5,
@@ -152,8 +208,8 @@ export const TrimmedBulgedSurface: Story = {
       trim.map(([u, v]) => [u, v, 0]),
       Array(trim.length).fill(1)
     );
-    const trimLine = sampleNurbsCurve2D(nurbsTrim, 200).map(([u, v]) =>
-      projectUVTo3DWithOffset(surface, u, v)
+    const trimLine = sampleNurbsCurve2D(nurbsTrim, trimCurveResolution).map(
+      ([u, v]) => projectUVTo3DWithOffset(surface, u, v)
     );
 
     return (
@@ -165,7 +221,11 @@ export const TrimmedBulgedSurface: Story = {
           degreeV={2}
           wireframe
         />
-        <TrimmedSurface>
+        <TrimmedSurface
+          trimCurveResolution={trimCurveResolution}
+          adaptiveMaxAngleDeg={adaptiveMaxAngleDeg}
+          adaptiveMaxDepth={adaptiveMaxDepth}
+        >
           <NurbsSurface
             controlPoints={controlPoints}
             weights={weights}
@@ -196,8 +256,18 @@ export const TrimmedFlatEllipticalSurface: Story = {
     color: "#3366ff",
     wireframe: false,
     scale: 0.45,
+    trimCurveResolution: 200,
+    adaptiveMaxAngleDeg: 5,
+    adaptiveMaxDepth: 10,
   },
-  render: ({ color = "#3366ff", wireframe = false, scale = 0.45 }) => {
+  render: ({
+    color = "#3366ff",
+    wireframe = false,
+    scale = 0.45,
+    trimCurveResolution = 200,
+    adaptiveMaxAngleDeg = 5,
+    adaptiveMaxDepth = 10,
+  }) => {
     const numPoints = 6;
     const points: [number, number][] = Array.from(
       { length: numPoints },
@@ -233,8 +303,8 @@ export const TrimmedFlatEllipticalSurface: Story = {
       points.map(([u, v]) => [u, v, 0]),
       Array(points.length).fill(1)
     );
-    const linePts = sampleNurbsCurve2D(curve, 200).map(([u, v]) =>
-      projectUVTo3DWithOffset(surface, u, v)
+    const linePts = sampleNurbsCurve2D(curve, trimCurveResolution).map(
+      ([u, v]) => projectUVTo3DWithOffset(surface, u, v)
     );
 
     return (
@@ -246,7 +316,11 @@ export const TrimmedFlatEllipticalSurface: Story = {
           degreeV={2}
           wireframe
         />
-        <TrimmedSurface>
+        <TrimmedSurface
+          trimCurveResolution={trimCurveResolution}
+          adaptiveMaxAngleDeg={adaptiveMaxAngleDeg}
+          adaptiveMaxDepth={adaptiveMaxDepth}
+        >
           <NurbsSurface
             controlPoints={controlPoints}
             weights={weights}
@@ -277,8 +351,18 @@ export const TrimmedSurfaceWithHole: Story = {
     color: "#33cc33",
     wireframe: false,
     scale: 0.45,
+    trimCurveResolution: 200,
+    adaptiveMaxAngleDeg: 5,
+    adaptiveMaxDepth: 10,
   },
-  render: ({ color = "#33cc33", wireframe = false, scale = 0.45 }) => {
+  render: ({
+    color = "#33cc33",
+    wireframe = false,
+    scale = 0.45,
+    trimCurveResolution = 200,
+    adaptiveMaxAngleDeg = 5,
+    adaptiveMaxDepth = 10,
+  }) => {
     const baseOuter = createCircularCurveUV(0.5, [0.5, 0.5], 6).points;
     const baseHole = createCircularCurveUV(0.5, [0.5, 0.5], 6).points;
     const outer: [number, number][] = baseOuter.map(([u, v]) => [
@@ -325,11 +409,11 @@ export const TrimmedSurfaceWithHole: Story = {
       Array(hole.length).fill(1)
     );
 
-    const outer3D = sampleNurbsCurve2D(outerCurve, 200).map(([u, v]) =>
-      projectUVTo3DWithOffset(surface, u, v)
+    const outer3D = sampleNurbsCurve2D(outerCurve, trimCurveResolution).map(
+      ([u, v]) => projectUVTo3DWithOffset(surface, u, v)
     );
-    const hole3D = sampleNurbsCurve2D(holeCurve, 200).map(([u, v]) =>
-      projectUVTo3DWithOffset(surface, u, v)
+    const hole3D = sampleNurbsCurve2D(holeCurve, trimCurveResolution).map(
+      ([u, v]) => projectUVTo3DWithOffset(surface, u, v)
     );
 
     return (
@@ -341,7 +425,11 @@ export const TrimmedSurfaceWithHole: Story = {
           degreeV={2}
           wireframe
         />
-        <TrimmedSurface>
+        <TrimmedSurface
+          trimCurveResolution={trimCurveResolution}
+          adaptiveMaxAngleDeg={adaptiveMaxAngleDeg}
+          adaptiveMaxDepth={adaptiveMaxDepth}
+        >
           <NurbsSurface
             controlPoints={controlPoints}
             weights={weights}
@@ -390,8 +478,18 @@ export const TrimmedSurfaceClosedLoop: Story = {
     color: "#ffaa00",
     wireframe: false,
     scale: 0.4,
+    trimCurveResolution: 200,
+    adaptiveMaxAngleDeg: 5,
+    adaptiveMaxDepth: 10,
   },
-  render: ({ color = "#ffaa00", wireframe = false, scale = 0.4 }) => {
+  render: ({
+    color = "#ffaa00",
+    wireframe = false,
+    scale = 0.4,
+    trimCurveResolution = 200,
+    adaptiveMaxAngleDeg = 5,
+    adaptiveMaxDepth = 10,
+  }) => {
     const numPoints = 6;
     const center: [number, number] = [0.5, 0.5];
 
@@ -432,8 +530,8 @@ export const TrimmedSurfaceClosedLoop: Story = {
       Array(closedPoints.length).fill(1)
     );
 
-    const trimLine = sampleNurbsCurve2D(closedCurve, 200).map(([u, v]) =>
-      projectUVTo3DWithOffset(surface, u, v)
+    const trimLine = sampleNurbsCurve2D(closedCurve, trimCurveResolution).map(
+      ([u, v]) => projectUVTo3DWithOffset(surface, u, v)
     );
 
     return (
@@ -445,7 +543,11 @@ export const TrimmedSurfaceClosedLoop: Story = {
           degreeV={2}
           wireframe
         />
-        <TrimmedSurface>
+        <TrimmedSurface
+          trimCurveResolution={trimCurveResolution}
+          adaptiveMaxAngleDeg={adaptiveMaxAngleDeg}
+          adaptiveMaxDepth={adaptiveMaxDepth}
+        >
           <NurbsSurface
             controlPoints={controlPoints}
             weights={weights}
@@ -467,5 +569,134 @@ export const TrimmedSurfaceClosedLoop: Story = {
         <Line points={trimLine} color="black" />
       </>
     );
+  },
+};
+
+// Component for world space story
+function WorldSpaceTrimmedSurfaceDemo({
+  color = "#ff00ff",
+  wireframe = false,
+  trimCurveResolution = 200,
+  adaptiveMaxAngleDeg = 5,
+  adaptiveMaxDepth = 10,
+  world = true,
+  curveX = 1.0,
+  curveY = 1.0,
+}: WorldSpaceProps) {
+  const center: [number, number, number] = [curveX, curveY, 0.5];
+  const numPoints = 6;
+  const radius = 0.3;
+
+  // Create a circular curve in 3D space
+  const worldPoints: [number, number, number][] = Array.from(
+    { length: numPoints },
+    (_, i) => {
+      const angle = (i / numPoints) * Math.PI * 2;
+      return [
+        center[0] + radius * Math.cos(angle),
+        center[1] + radius * Math.sin(angle),
+        center[2],
+      ] as [number, number, number];
+    }
+  );
+  worldPoints.push(worldPoints[0]); // Ensure closure
+
+  const degree = 2;
+  const knots = Array(worldPoints.length + degree + 1)
+    .fill(0)
+    .map((_, i) => {
+      if (i < degree + 1) return 0;
+      if (i >= worldPoints.length) return 1;
+      return (i - degree) / (worldPoints.length - degree);
+    });
+
+  const worldCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+    degree,
+    knots,
+    worldPoints,
+    Array(worldPoints.length).fill(1)
+  );
+
+  // Sample points for visualization
+  const trimLine = Array.from({ length: trimCurveResolution + 1 }, (_, i) => {
+    const t = i / trimCurveResolution;
+    const pt = worldCurve.point(t);
+    return [pt[0], pt[1], pt[2]] as [number, number, number];
+  });
+
+  return (
+    <>
+      <NurbsSurface
+        controlPoints={controlPoints}
+        weights={weights}
+        degreeU={2}
+        degreeV={2}
+        wireframe
+      />
+      <TrimmedSurface
+        trimCurveResolution={trimCurveResolution}
+        adaptiveMaxAngleDeg={adaptiveMaxAngleDeg}
+        adaptiveMaxDepth={adaptiveMaxDepth}
+        world={world}
+      >
+        <NurbsSurface
+          controlPoints={controlPoints}
+          weights={weights}
+          degreeU={2}
+          degreeV={2}
+        />
+        <NurbsCurve
+          points={worldPoints}
+          weights={Array(worldPoints.length).fill(1)}
+          knots={knots}
+          degree={2}
+        />
+        <meshPhongMaterial
+          color={color}
+          wireframe={wireframe}
+          side={DoubleSide}
+        />
+      </TrimmedSurface>
+      {world && (
+        <>
+          <Line points={trimLine} color="black" />
+          <mesh position={new Vector3(...center)}>
+            <sphereGeometry args={[0.05, 16, 16]} />
+            <meshBasicMaterial color="red" />
+          </mesh>
+        </>
+      )}
+    </>
+  );
+}
+
+// === Story 5 ===
+export const WorldSpaceTrimmedSurface: Story = {
+  args: {
+    color: "#ff00ff",
+    wireframe: false,
+    scale: 0.4,
+    trimCurveResolution: 200,
+    adaptiveMaxAngleDeg: 5,
+    adaptiveMaxDepth: 10,
+    world: true,
+    curveX: 1.0,
+    curveY: 1.0,
+  } as WorldSpaceProps,
+  render: (args: Props) => {
+    if ("curveX" in args && "curveY" in args && "scale" in args) {
+      return <WorldSpaceTrimmedSurfaceDemo {...args} />;
+    }
+    throw new Error(
+      "WorldSpaceTrimmedSurface requires curveX, curveY, and scale props"
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A trimmed surface with a circular trimming curve in world space, controlled by X and Y sliders.",
+      },
+    },
   },
 };

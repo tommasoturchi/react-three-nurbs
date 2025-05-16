@@ -10,18 +10,27 @@ import earcut from "earcut";
 import {
   projectPointToSurface,
   computeNormal,
-  sampleNurbsCurve2D,
+  adaptiveSampleNurbsCurve2D,
+  projectPointToSurfaceUV,
 } from "../utils/nurbs";
 
 interface Props extends Omit<MeshProps, "geometry"> {
   color?: string;
+  trimCurveResolution?: number;
+  adaptiveMaxAngleDeg?: number;
+  adaptiveMaxDepth?: number;
   wireframe?: boolean;
+  world?: boolean;
   children?: ReactElement | ReactElement[];
 }
 
 export function TrimmedSurface({
   color = "#ffffff",
+  trimCurveResolution = 200,
+  adaptiveMaxAngleDeg = 5,
+  adaptiveMaxDepth = 10,
   wireframe = false,
+  world = false,
   children,
   ...meshProps
 }: Props) {
@@ -93,18 +102,54 @@ export function TrimmedSurface({
       .map((child) => {
         if (!isValidElement(child)) return null;
         const curveProps = child.props;
-        return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+        const curve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
           curveProps.degree,
           curveProps.knots,
           curveProps.points,
           curveProps.weights
         );
+
+        if (world) {
+          // If in world space, project curve points onto surface to get UV coordinates
+          const numPoints = trimCurveResolution;
+          const projectedPoints: [number, number][] = [];
+          for (let i = 0; i <= numPoints; i++) {
+            const t = i / numPoints;
+            const point = curve.point(t);
+            // Project 3D point onto surface to get UV coordinates
+            const uv = projectPointToSurfaceUV(verbSurface, point);
+            if (uv) {
+              projectedPoints.push(uv);
+            }
+          }
+          // Create new curve in UV space using projected points
+          if (projectedPoints.length > 0) {
+            return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+              curveProps.degree,
+              Array(projectedPoints.length + curveProps.degree + 1)
+                .fill(0)
+                .map((_, i) => {
+                  if (i < curveProps.degree + 1) return 0;
+                  if (i >= projectedPoints.length) return 1;
+                  return (
+                    (i - curveProps.degree) /
+                    (projectedPoints.length - curveProps.degree)
+                  );
+                }),
+              projectedPoints.map(([u, v]) => [u, v, 0]),
+              Array(projectedPoints.length).fill(1)
+            );
+          }
+          return null;
+        }
+
+        return curve;
       })
       .filter((curve): curve is verb.geom.NurbsCurve => curve !== null);
 
     // Sample all curves
     const uvLoops: [number, number][][] = trimmingCurves.map((curve) =>
-      sampleNurbsCurve2D(curve, 200)
+      adaptiveSampleNurbsCurve2D(curve, adaptiveMaxAngleDeg, adaptiveMaxDepth)
     );
 
     // Flatten UVs for earcut
@@ -112,6 +157,7 @@ export function TrimmedSurface({
     const holeIndices: number[] = [];
     let vertexCount = 0;
 
+    // Add curve points first to maintain boundary
     uvLoops.forEach((loop, i) => {
       if (i > 0) holeIndices.push(vertexCount);
       loop.forEach(([u, v]) => {
@@ -149,7 +195,16 @@ export function TrimmedSurface({
     setGeometry(geometry);
 
     return () => geometry.dispose();
-  }, [children, color, wireframe, scene]);
+  }, [
+    children,
+    color,
+    wireframe,
+    scene,
+    trimCurveResolution,
+    adaptiveMaxAngleDeg,
+    adaptiveMaxDepth,
+    world,
+  ]);
 
   if (!geometry) return null;
 
