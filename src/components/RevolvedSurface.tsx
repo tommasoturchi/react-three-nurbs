@@ -1,9 +1,9 @@
-import { useMemo, isValidElement, Children } from "react";
+import { useMemo, useRef, isValidElement, Children } from "react";
 import type { ReactElement } from "react";
 import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore, createRevolvedSurface } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
-import { DoubleSide } from "three";
+import { DoubleSide, BufferGeometry, Float32BufferAttribute } from "three";
 import type { MeshProps } from "@react-three/fiber";
 import { generateUniformKnots } from "../utils/nurbs";
 import { isMaterialElement } from "../utils/materials";
@@ -46,43 +46,28 @@ export const RevolvedSurface = ({
     return { profileChild, materialChild };
   }, [children]);
 
+  const geometryRef = useRef<BufferGeometry | null>(null);
+
   const geometry = useMemo(() => {
     if (!profileChild) {
       console.error("RevolvedSurface requires a NurbsCurve child");
       return null;
     }
-
     try {
       const { points, degree = 3, weights, knots } = profileChild.props;
       const defaultWeights = Array(points.length).fill(1);
+      if (!points || points.length < 2) return null;
 
-      if (!points || points.length < 2) {
-        console.error("Profile curve must have at least 2 points");
-        return null;
-      }
-
-      // Normalize the axis vector
-      const axisLength = Math.sqrt(
-        axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]
-      );
-      if (axisLength === 0) {
-        console.error("Axis vector cannot be zero");
-        return null;
-      }
+      const axisLength = Math.sqrt(axis[0] ** 2 + axis[1] ** 2 + axis[2] ** 2);
+      if (axisLength === 0) return null;
       const normalizedAxis: [number, number, number] = [
-        axis[0] / axisLength,
-        axis[1] / axisLength,
-        axis[2] / axisLength,
+        axis[0] / axisLength, axis[1] / axisLength, axis[2] / axisLength,
       ];
 
       const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
       const profileCurve = NurbsCurveCore.byKnotsControlPointsWeights(
-        degree,
-        resolvedKnots,
-        points,
-        weights ?? defaultWeights
+        degree, resolvedKnots, points, weights ?? defaultWeights
       );
-
       const revolvedSurface = new NurbsSurfaceCore(
         createRevolvedSurface(profileCurve.asData(), center, normalizedAxis, angle)
       );
@@ -90,7 +75,6 @@ export const RevolvedSurface = ({
       const vertices: number[] = [];
       const indices: number[] = [];
       const uvs: number[] = [];
-
       for (let i = 0; i <= resolutionU; i++) {
         for (let j = 0; j <= resolutionV; j++) {
           const u = i / resolutionU;
@@ -100,20 +84,25 @@ export const RevolvedSurface = ({
           uvs.push(u, v);
         }
       }
-
       for (let i = 0; i < resolutionU; i++) {
         for (let j = 0; j < resolutionV; j++) {
           const a = i * (resolutionV + 1) + j;
           const b = a + 1;
           const c = (i + 1) * (resolutionV + 1) + j;
           const d = c + 1;
-
           indices.push(a, b, c);
           indices.push(b, d, c);
         }
       }
 
-      return { vertices, indices, uvs };
+      const geo = geometryRef.current ?? new BufferGeometry();
+      geo.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+      geo.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      geo.computeBoundingSphere();
+      geometryRef.current = geo;
+      return geo;
     } catch (error) {
       console.error("Error creating revolved surface:", error);
       return null;
@@ -123,27 +112,7 @@ export const RevolvedSurface = ({
   if (!geometry) return null;
 
   return (
-    <mesh {...meshProps}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={geometry.vertices.length / 3}
-          array={new Float32Array(geometry.vertices)}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-uv"
-          count={geometry.uvs.length / 2}
-          array={new Float32Array(geometry.uvs)}
-          itemSize={2}
-        />
-        <bufferAttribute
-          attach="index"
-          count={geometry.indices.length}
-          array={new Uint32Array(geometry.indices)}
-          itemSize={1}
-        />
-      </bufferGeometry>
+    <mesh {...meshProps} geometry={geometry}>
       {materialChild ? (
         materialChild
       ) : (

@@ -172,20 +172,53 @@ export class NurbsCurve {
 
   /**
    * Find the parameter of the closest point on the curve to a given point.
-   * Uses Newton iteration with initial guess from uniform sampling.
+   * Implements Algorithm A6.1 from "The NURBS Book" (Piegl & Tiller), Section 6.1.
+   *
+   * Phase 1: Initial guess via control polygon (Greville abscissa of closest control point)
+   *          + refinement by sampling within the support of that basis function.
+   * Phase 2: Newton iteration with four convergence criteria:
+   *   (1) Point coincidence:  ||C(t) - P|| < eps1
+   *   (2) Zero cosine:        |C'(t) · (C(t) - P)| / (|C'(t)| · |C(t) - P|) < eps2
+   *   (3) Parameter correction: |Δt| · |C'(t)| < eps1
+   *   (4) Domain bounds
    */
   closestParam(point: number[]): number {
     const dim = point.length;
-
-    // Coarse sampling for initial guess
-    const numSamples = Math.max(this._controlPoints.length * 10, 50);
-    let bestT = 0;
-    let bestDist = Infinity;
+    const eps1 = 1e-8;  // distance tolerance
+    const eps2 = 1e-6;  // cosine tolerance
     const tMin = this._knots[this._degree];
     const tMax = this._knots[this._knots.length - this._degree - 1];
+    const n = this._controlPoints.length - 1;
 
+    // Phase 1: Initial guess — closest control point's Greville abscissa + local sampling
+    let bestT = tMin;
+    let bestDist = Infinity;
+
+    // Find closest control point and use its Greville abscissa
+    for (let i = 0; i <= n; i++) {
+      let dist = 0;
+      for (let d = 0; d < dim; d++) {
+        dist += (this._controlPoints[i][d] - point[d]) ** 2;
+      }
+      if (dist < bestDist) {
+        bestDist = dist;
+        // Greville abscissa: average of knots in the support of N_{i,p}
+        let greville = 0;
+        for (let j = 1; j <= this._degree; j++) {
+          greville += this._knots[i + j];
+        }
+        greville /= this._degree;
+        bestT = Math.max(tMin, Math.min(tMax, greville));
+      }
+    }
+
+    // Refine by sampling near the initial guess
+    const span = 0.2 * (tMax - tMin);
+    const sampleMin = Math.max(tMin, bestT - span);
+    const sampleMax = Math.min(tMax, bestT + span);
+    const numSamples = 20;
     for (let i = 0; i <= numSamples; i++) {
-      const t = tMin + (tMax - tMin) * i / numSamples;
+      const t = sampleMin + (sampleMax - sampleMin) * i / numSamples;
       const pt = this.point(t);
       let dist = 0;
       for (let d = 0; d < dim; d++) dist += (pt[d] - point[d]) ** 2;
@@ -195,41 +228,70 @@ export class NurbsCurve {
       }
     }
 
-    // Newton iteration to refine
-    // Minimize D(t) = ||C(t) - P||^2
-    // D'(t) = 2 * C'(t) · (C(t) - P)
-    // D''(t) = 2 * (C''(t) · (C(t) - P) + C'(t) · C'(t))
+    // Also do a coarser global sweep to avoid local minima traps
+    const globalSamples = Math.max(n * 4, 20);
+    for (let i = 0; i <= globalSamples; i++) {
+      const t = tMin + (tMax - tMin) * i / globalSamples;
+      const pt = this.point(t);
+      let dist = 0;
+      for (let d = 0; d < dim; d++) dist += (pt[d] - point[d]) ** 2;
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestT = t;
+      }
+    }
+
+    // Phase 2: Newton iteration with proper convergence criteria
     let t = bestT;
     const maxDeriv = Math.min(2, this._degree);
+
     for (let iter = 0; iter < 50; iter++) {
       const ders = this.derivatives(t, maxDeriv);
-      const diff = ders[0].map((v, d) => v - point[d]);
+      const C = ders[0];
+      const Ct = ders[1];
+      const diff = C.map((v, d) => v - point[d]);
 
-      // f = C'·(C-P), fPrime = C''·(C-P) + ||C'||^2
-      let f = 0;
-      let cPrimeSq = 0;
+      // Criterion 1: Point coincidence ||C(t) - P|| < eps1
+      let distSq = 0;
+      for (let d = 0; d < dim; d++) distSq += diff[d] ** 2;
+      if (Math.sqrt(distSq) < eps1) break;
+
+      // Criterion 2: Zero cosine |C'·(C-P)| / (|C'|·|C-P|) < eps2
+      let dotCtDiff = 0;
+      let CtLen = 0;
       for (let d = 0; d < dim; d++) {
-        f += ders[1][d] * diff[d];
-        cPrimeSq += ders[1][d] * ders[1][d];
+        dotCtDiff += Ct[d] * diff[d];
+        CtLen += Ct[d] ** 2;
+      }
+      CtLen = Math.sqrt(CtLen);
+      const dist = Math.sqrt(distSq);
+      if (CtLen > 0 && dist > 0) {
+        const cosine = Math.abs(dotCtDiff) / (CtLen * dist);
+        if (cosine < eps2) break;
       }
 
-      // Check if we've converged (C' · (C-P) ≈ 0 means we're at the foot of the perpendicular)
-      if (Math.abs(f) < 1e-12 * cPrimeSq) break;
-
-      let fPrime = cPrimeSq;
+      // Newton step: Δt = -C'·(C-P) / (C''·(C-P) + C'·C')
+      let numerator = dotCtDiff;
+      let denominator = CtLen * CtLen;
       if (maxDeriv >= 2) {
+        const Ctt = ders[2];
         for (let d = 0; d < dim; d++) {
-          fPrime += ders[2][d] * diff[d];
+          denominator += Ctt[d] * diff[d];
         }
       }
 
-      if (Math.abs(fPrime) < 1e-14) break;
+      if (Math.abs(denominator) < 1e-14) break;
 
-      const tNew = t - f / fPrime;
-      const tClamped = Math.max(tMin, Math.min(tMax, tNew));
+      const dt = -numerator / denominator;
 
-      if (Math.abs(tClamped - t) < 1e-12) break;
-      t = tClamped;
+      // Criterion 3: Parameter correction |Δt|·|C'| < eps1
+      if (Math.abs(dt) * CtLen < eps1) break;
+
+      // Criterion 4: Clamp to domain
+      const tNew = Math.max(tMin, Math.min(tMax, t + dt));
+
+      if (Math.abs(tNew - t) < 1e-14) break;
+      t = tNew;
     }
 
     return t;

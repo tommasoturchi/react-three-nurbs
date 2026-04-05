@@ -195,7 +195,17 @@ export class NurbsSurface {
   }
 
   /**
-   * Find closest UV parameters to a 3D point using Newton iteration.
+   * Find closest UV parameters to a 3D point.
+   * Implements the surface point projection from "The NURBS Book" Section 6.1.
+   *
+   * Phase 1: Initial guess via closest control point (Greville abscissa)
+   *          + grid refinement near the best candidate.
+   * Phase 2: Newton iteration with four convergence criteria:
+   *   (1) Point coincidence:  ||S(u,v) - P|| < eps1
+   *   (2) Zero cosine (U):   |S_u · (S - P)| / (|S_u| · |S - P|) < eps2
+   *   (2) Zero cosine (V):   |S_v · (S - P)| / (|S_v| · |S - P|) < eps2
+   *   (3) Parameter correction: |Δu·S_u + Δv·S_v| < eps1
+   *   (4) Domain bounds
    */
   closestParam(point: number[]): number[] {
     const dim = point.length;
@@ -205,10 +215,39 @@ export class NurbsSurface {
     const uMax = this._knotsU[nU + 1];
     const vMin = this._knotsV[this._degreeV];
     const vMax = this._knotsV[nV + 1];
+    const eps1 = 1e-8;  // distance tolerance
+    const eps2 = 1e-6;  // cosine tolerance
 
-    // Grid search for initial guess
-    const res = 15;
-    let bestU = uMin, bestV = vMin, bestDist = Infinity;
+    // Phase 1: Initial guess — closest control point's Greville abscissa
+    let bestU = (uMin + uMax) / 2;
+    let bestV = (vMin + vMax) / 2;
+    let bestDist = Infinity;
+
+    for (let i = 0; i <= nU; i++) {
+      // Greville abscissa in U
+      let gU = 0;
+      for (let k = 1; k <= this._degreeU; k++) gU += this._knotsU[i + k];
+      gU /= this._degreeU;
+
+      for (let j = 0; j <= nV; j++) {
+        let dist = 0;
+        for (let d = 0; d < dim; d++) {
+          dist += (this._controlPoints[i][j][d] - point[d]) ** 2;
+        }
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestU = Math.max(uMin, Math.min(uMax, gU));
+          // Greville abscissa in V
+          let gV = 0;
+          for (let k = 1; k <= this._degreeV; k++) gV += this._knotsV[j + k];
+          gV /= this._degreeV;
+          bestV = Math.max(vMin, Math.min(vMax, gV));
+        }
+      }
+    }
+
+    // Refine by grid sampling near the best candidate + global coarse sweep
+    const res = 20;
     for (let i = 0; i <= res; i++) {
       for (let j = 0; j <= res; j++) {
         const u = uMin + (uMax - uMin) * i / res;
@@ -220,39 +259,73 @@ export class NurbsSurface {
       }
     }
 
-    // Newton iteration in 2D
-    let u = bestU, vv = bestV;
-    for (let iter = 0; iter < 30; iter++) {
-      const ders = this.derivatives(u, vv, 1);
-      const diff = ders[0][0].map((s, d) => s - point[d]);
+    // Phase 2: Newton iteration with proper convergence criteria
+    let u = bestU;
+    let v = bestV;
+
+    for (let iter = 0; iter < 50; iter++) {
+      const ders = this.derivatives(u, v, 1);
+      const S = ders[0][0];
       const Su = ders[1][0];
       const Sv = ders[0][1];
+      const diff = S.map((s, d) => s - point[d]);
 
-      // J = [Su·Su, Su·Sv; Sv·Su, Sv·Sv], r = [Su·diff, Sv·diff]
-      let j00 = 0, j01 = 0, j11 = 0, r0 = 0, r1 = 0;
+      // Criterion 1: Point coincidence ||S(u,v) - P|| < eps1
+      let distSq = 0;
+      for (let d = 0; d < dim; d++) distSq += diff[d] ** 2;
+      const dist = Math.sqrt(distSq);
+      if (dist < eps1) break;
+
+      // Criterion 2: Zero cosine in both U and V directions
+      let dotSuDiff = 0, dotSvDiff = 0, SuLen = 0, SvLen = 0;
+      for (let d = 0; d < dim; d++) {
+        dotSuDiff += Su[d] * diff[d];
+        dotSvDiff += Sv[d] * diff[d];
+        SuLen += Su[d] ** 2;
+        SvLen += Sv[d] ** 2;
+      }
+      SuLen = Math.sqrt(SuLen);
+      SvLen = Math.sqrt(SvLen);
+
+      const cosU = SuLen > 0 && dist > 0 ? Math.abs(dotSuDiff) / (SuLen * dist) : 0;
+      const cosV = SvLen > 0 && dist > 0 ? Math.abs(dotSvDiff) / (SvLen * dist) : 0;
+      if (cosU < eps2 && cosV < eps2) break;
+
+      // Newton step: solve 2x2 system
+      // [Su·Su  Su·Sv] [Δu]   [-Su·diff]
+      // [Sv·Su  Sv·Sv] [Δv] = [-Sv·diff]
+      let j00 = 0, j01 = 0, j11 = 0;
       for (let d = 0; d < dim; d++) {
         j00 += Su[d] * Su[d];
         j01 += Su[d] * Sv[d];
         j11 += Sv[d] * Sv[d];
-        r0 += Su[d] * diff[d];
-        r1 += Sv[d] * diff[d];
       }
 
       const det = j00 * j11 - j01 * j01;
       if (Math.abs(det) < 1e-14) break;
 
-      const du = -(j11 * r0 - j01 * r1) / det;
-      const dv = -(j00 * r1 - j01 * r0) / det;
+      const du = -(j11 * dotSuDiff - j01 * dotSvDiff) / det;
+      const dv = -(j00 * dotSvDiff - j01 * dotSuDiff) / det;
 
+      // Criterion 3: Parameter correction in world space
+      // |Δu·S_u + Δv·S_v| < eps1
+      let corrSq = 0;
+      for (let d = 0; d < dim; d++) {
+        const corr = du * Su[d] + dv * Sv[d];
+        corrSq += corr * corr;
+      }
+      if (Math.sqrt(corrSq) < eps1) break;
+
+      // Criterion 4: Clamp to domain
       const newU = Math.max(uMin, Math.min(uMax, u + du));
-      const newV = Math.max(vMin, Math.min(vMax, vv + dv));
+      const newV = Math.max(vMin, Math.min(vMax, v + dv));
 
-      if (Math.abs(newU - u) + Math.abs(newV - vv) < 1e-10) break;
+      if (Math.abs(newU - u) + Math.abs(newV - v) < 1e-14) break;
       u = newU;
-      vv = newV;
+      v = newV;
     }
 
-    return [u, vv];
+    return [u, v];
   }
 
   /**

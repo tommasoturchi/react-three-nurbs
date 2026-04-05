@@ -32,6 +32,7 @@ export {
   sampleNurbsCurve2D,
   adaptiveSampleNurbsCurve2D,
   projectPointToSurfaceUV,
+  projectCurveOntoSurface,
 } from "./utils/nurbs";
 
 export {

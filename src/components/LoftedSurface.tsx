@@ -1,9 +1,9 @@
-import React, { useMemo, Children, isValidElement } from "react";
+import React, { useMemo, useRef, Children, isValidElement } from "react";
 import type { ReactElement } from "react";
 import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
-import { DoubleSide } from "three";
+import { DoubleSide, BufferGeometry, Float32BufferAttribute } from "three";
 import { generateUniformKnots } from "../utils/nurbs";
 import { isMaterialElement } from "../utils/materials";
 
@@ -24,7 +24,6 @@ export const LoftedSurface = ({
   wireframe = false,
   children,
 }: LoftedSurfaceProps) => {
-  // Memoize separation of curve children and material child
   const { curveChildren, materialChild } = useMemo(() => {
     const curveChildren: ReactElement<NurbsCurveProps>[] = [];
     let materialChild: ReactElement | null = null;
@@ -38,6 +37,8 @@ export const LoftedSurface = ({
     return { curveChildren, materialChild };
   }, [children]);
 
+  const geometryRef = useRef<BufferGeometry | null>(null);
+
   const geometry = useMemo(() => {
     if (curveChildren.length < 2) {
       console.error("LoftedSurface requires at least 2 NurbsCurve children");
@@ -49,16 +50,11 @@ export const LoftedSurface = ({
         const defaultWeights = Array(points.length).fill(1);
         const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
         return NurbsCurveCore.byKnotsControlPointsWeights(
-          degree,
-          resolvedKnots,
-          points,
-          weights ?? defaultWeights
+          degree, resolvedKnots, points, weights ?? defaultWeights
         );
       });
-      const loftedSurface = NurbsSurfaceCore.byLoftingCurves(
-        nurbsCurves,
-        degreeV
-      );
+      const loftedSurface = NurbsSurfaceCore.byLoftingCurves(nurbsCurves, degreeV);
+
       const vertices: number[] = [];
       const indices: number[] = [];
       const uvs: number[] = [];
@@ -81,11 +77,15 @@ export const LoftedSurface = ({
           indices.push(b, d, c);
         }
       }
-      return {
-        vertices,
-        indices,
-        uvs,
-      };
+
+      const geo = geometryRef.current ?? new BufferGeometry();
+      geo.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+      geo.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      geo.computeBoundingSphere();
+      geometryRef.current = geo;
+      return geo;
     } catch (error) {
       console.error("Error creating lofted surface:", error);
       return null;
@@ -95,27 +95,7 @@ export const LoftedSurface = ({
   if (!geometry) return null;
 
   return (
-    <mesh>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={geometry.vertices.length / 3}
-          array={new Float32Array(geometry.vertices)}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-uv"
-          count={geometry.uvs.length / 2}
-          array={new Float32Array(geometry.uvs)}
-          itemSize={2}
-        />
-        <bufferAttribute
-          attach="index"
-          count={geometry.indices.length}
-          array={new Uint32Array(geometry.indices)}
-          itemSize={1}
-        />
-      </bufferGeometry>
+    <mesh geometry={geometry}>
       {materialChild ? (
         materialChild
       ) : (

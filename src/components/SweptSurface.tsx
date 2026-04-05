@@ -1,9 +1,9 @@
-import { useMemo, Children, isValidElement } from "react";
+import { useMemo, useRef, Children, isValidElement } from "react";
 import type { ReactElement } from "react";
 import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore, createSweptSurface } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
-import { DoubleSide } from "three";
+import { DoubleSide, BufferGeometry, Float32BufferAttribute } from "three";
 import type { MeshProps } from "@react-three/fiber";
 import { generateUniformKnots } from "../utils/nurbs";
 import { isMaterialElement } from "../utils/materials";
@@ -44,36 +44,31 @@ export const SweptSurface = ({
     };
   }, [children]);
 
+  const geometryRef = useRef<BufferGeometry | null>(null);
+
   const geometry = useMemo(() => {
     if (!profileChild || !railChild) {
       console.error("SweptSurface requires exactly 2 NurbsCurve children (profile and rail)");
       return null;
     }
-
     try {
       const makeCurve = (props: NurbsCurveProps) => {
         const { points, degree = 3, weights, knots } = props;
         const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
         return NurbsCurveCore.byKnotsControlPointsWeights(
-          degree,
-          resolvedKnots,
-          points,
-          weights ?? Array(points.length).fill(1)
+          degree, resolvedKnots, points, weights ?? Array(points.length).fill(1)
         );
       };
 
       const profileCurve = makeCurve(profileChild.props);
       const railCurve = makeCurve(railChild.props);
-
       const sweptSurface = new NurbsSurfaceCore(
         createSweptSurface(profileCurve.asData(), railCurve.asData())
       );
 
       const vertices: number[] = [];
-      const normals: number[] = [];
       const indices: number[] = [];
       const uvs: number[] = [];
-
       for (let i = 0; i <= resolutionU; i++) {
         for (let j = 0; j <= resolutionV; j++) {
           const u = i / resolutionU;
@@ -81,34 +76,27 @@ export const SweptSurface = ({
           const point = sweptSurface.point(u, v);
           vertices.push(point[0], point[1], point[2]);
           uvs.push(u, v);
-
-          try {
-            const n = sweptSurface.normal(u, v);
-            const len = Math.sqrt(n[0] ** 2 + n[1] ** 2 + n[2] ** 2);
-            if (len > 0) {
-              normals.push(n[0] / len, n[1] / len, n[2] / len);
-            } else {
-              normals.push(0, 1, 0);
-            }
-          } catch {
-            normals.push(0, 1, 0);
-          }
         }
       }
-
       for (let i = 0; i < resolutionU; i++) {
         for (let j = 0; j < resolutionV; j++) {
           const a = i * (resolutionV + 1) + j;
           const b = a + 1;
           const c = (i + 1) * (resolutionV + 1) + j;
           const d = c + 1;
-
           indices.push(a, b, c);
           indices.push(b, d, c);
         }
       }
 
-      return { vertices, normals, indices, uvs };
+      const geo = geometryRef.current ?? new BufferGeometry();
+      geo.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+      geo.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      geo.computeBoundingSphere();
+      geometryRef.current = geo;
+      return geo;
     } catch (error) {
       console.error("Error creating swept surface:", error);
       return null;
@@ -118,33 +106,7 @@ export const SweptSurface = ({
   if (!geometry) return null;
 
   return (
-    <mesh {...meshProps}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={geometry.vertices.length / 3}
-          array={new Float32Array(geometry.vertices)}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-normal"
-          count={geometry.normals.length / 3}
-          array={new Float32Array(geometry.normals)}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-uv"
-          count={geometry.uvs.length / 2}
-          array={new Float32Array(geometry.uvs)}
-          itemSize={2}
-        />
-        <bufferAttribute
-          attach="index"
-          count={geometry.indices.length}
-          array={new Uint32Array(geometry.indices)}
-          itemSize={1}
-        />
-      </bufferGeometry>
+    <mesh {...meshProps} geometry={geometry}>
       {materialChild ? (
         materialChild
       ) : (

@@ -1,6 +1,7 @@
-import { useMemo, isValidElement, Children } from "react";
+import { useMemo, useRef, isValidElement, Children } from "react";
 import type { ReactElement } from "react";
 import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore } from "../core";
+import { BufferGeometry, Float32BufferAttribute } from "three";
 import type { MeshProps } from "@react-three/fiber";
 import { NurbsSurface } from "./NurbsSurface";
 import { NurbsCurve } from "./NurbsCurve";
@@ -10,7 +11,7 @@ import {
   projectPointToSurface,
   computeNormal,
   adaptiveSampleNurbsCurve2D,
-  projectPointToSurfaceUV,
+  projectCurveOntoSurface,
 } from "../utils/nurbs";
 import { isMaterialElement } from "../utils/materials";
 
@@ -54,6 +55,8 @@ export function TrimmedSurface({
     return { surfaceChild, curveChildren, materialChild };
   }, [children]);
 
+  const geometryRef = useRef<BufferGeometry | null>(null);
+
   const geometry = useMemo(() => {
     if (!surfaceChild || curveChildren.length === 0) {
       if (!surfaceChild) console.warn("TrimmedSurface requires a NurbsSurface child");
@@ -87,21 +90,16 @@ export function TrimmedSurface({
           );
 
           if (world) {
-            const numPoints = trimCurveResolution;
-            const projectedPoints: [number, number][] = [];
-            for (let i = 0; i <= numPoints; i++) {
-              const t = i / numPoints;
-              const point = curve.point(t);
-              const uv = projectPointToSurfaceUV(verbSurface, point);
-              if (uv) projectedPoints.push(uv);
-            }
-            if (projectedPoints.length > 0) {
-              const projectedKnots = generateUniformKnots(projectedPoints.length, curveProps.degree ?? 2);
+            const projectedUVs = projectCurveOntoSurface(
+              verbSurface, curve, trimCurveResolution
+            );
+            if (projectedUVs.length > 1) {
+              const projectedKnots = generateUniformKnots(projectedUVs.length, curveProps.degree ?? 2);
               return NurbsCurveCore.byKnotsControlPointsWeights(
                 curveProps.degree ?? 2,
                 projectedKnots,
-                projectedPoints.map(([u, v]) => [u, v, 0]),
-                Array(projectedPoints.length).fill(1)
+                projectedUVs.map(([u, v]) => [u, v, 0]),
+                Array(projectedUVs.length).fill(1)
               );
             }
             return null;
@@ -146,12 +144,16 @@ export function TrimmedSurface({
         uvParams.push(u, v);
       }
 
-      return {
-        positions,
-        normals,
-        uvParams,
-        indices: Array.from(triangles),
-      };
+      // Imperatively update geometry (same pattern as NurbsSurface)
+      const geo = geometryRef.current ?? new BufferGeometry();
+      geo.setAttribute("position", new Float32BufferAttribute(positions, 3));
+      geo.setAttribute("normal", new Float32BufferAttribute(normals, 3));
+      geo.setAttribute("uv", new Float32BufferAttribute(uvParams, 2));
+      geo.setIndex(Array.from(triangles));
+      geo.computeBoundingSphere();
+      geometryRef.current = geo;
+
+      return geo;
     } catch (error) {
       console.error("Error creating trimmed surface:", error);
       return null;
@@ -173,33 +175,7 @@ export function TrimmedSurface({
   }
 
   return (
-    <mesh {...meshProps}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={geometry.positions.length / 3}
-          array={new Float32Array(geometry.positions)}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-normal"
-          count={geometry.normals.length / 3}
-          array={new Float32Array(geometry.normals)}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-uv"
-          count={geometry.uvParams.length / 2}
-          array={new Float32Array(geometry.uvParams)}
-          itemSize={2}
-        />
-        <bufferAttribute
-          attach="index"
-          count={geometry.indices.length}
-          array={new Uint32Array(geometry.indices)}
-          itemSize={1}
-        />
-      </bufferGeometry>
+    <mesh {...meshProps} geometry={geometry}>
       {materialChild}
     </mesh>
   );

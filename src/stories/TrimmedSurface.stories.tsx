@@ -1,37 +1,16 @@
 import { DoubleSide, Vector3 } from "three";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta } from "@storybook/react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Line } from "@react-three/drei";
 import { TrimmedSurface } from "../components/TrimmedSurface";
 import { NurbsSurface } from "../components/NurbsSurface";
 import { NurbsCurve } from "../components/NurbsCurve";
-import { Line } from "@react-three/drei";
 import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore } from "../core";
 import { sampleNurbsCurve2D } from "../utils/nurbs";
 
-type BaseProps = {
-  color?: string;
-  wireframe?: boolean;
-  trimCurveResolution?: number;
-  adaptiveMaxAngleDeg?: number;
-  adaptiveMaxDepth?: number;
-  world?: boolean;
-};
-
-type WorldSpaceProps = BaseProps & {
-  scale: number;
-  curveX: number;
-  curveY: number;
-};
-
-type Props = BaseProps | WorldSpaceProps;
-
 const meta = {
   title: "Components/TrimmedSurface",
-  component: TrimmedSurface,
-  parameters: {
-    layout: "centered",
-  },
+  parameters: { layout: "centered" },
   decorators: [
     (Story) => (
       <div style={{ width: "100vw", height: "100vh" }}>
@@ -45,14 +24,8 @@ const meta = {
     ),
   ],
   argTypes: {
-    color: {
-      control: "color",
-      description: "Color of the trimmed surface",
-    },
-    wireframe: {
-      control: "boolean",
-      description: "Whether to show the surface as wireframe",
-    },
+    color: { control: "color", description: "Color of the trimmed surface" },
+    wireframe: { control: "boolean", description: "Whether to show the surface as wireframe" },
     trimCurveResolution: {
       control: { type: "range", min: 10, max: 500, step: 10 },
       description: "Number of points to sample along the trimming curve",
@@ -65,10 +38,7 @@ const meta = {
       control: { type: "range", min: 1, max: 20, step: 1 },
       description: "Maximum recursion depth for adaptive tessellation",
     },
-    world: {
-      control: "boolean",
-      description: "Whether the trimming curve is in world space or UV space",
-    },
+    world: { control: "boolean", description: "Whether the trimming curve is in world space or UV space" },
     scale: {
       control: { type: "range", min: 0.1, max: 1, step: 0.1 },
       description: "Scale of the trimming curve",
@@ -82,11 +52,9 @@ const meta = {
       description: "Y position of the trimming curve center",
     },
   },
-} satisfies Meta<Props>;
+} satisfies Meta;
 
 export default meta;
-
-type Story = StoryObj<Props>;
 
 // Shared control points
 const controlPoints = [
@@ -165,7 +133,7 @@ function projectUVTo3DWithOffset(
 }
 
 // === Story 1 ===
-export const TrimmedBulgedSurface: Story = {
+export const TrimmedBulgedSurface = {
   args: {
     color: "#ff0000",
     wireframe: false,
@@ -181,7 +149,7 @@ export const TrimmedBulgedSurface: Story = {
     trimCurveResolution = 200,
     adaptiveMaxAngleDeg = 5,
     adaptiveMaxDepth = 10,
-  }) => {
+  }: Record<string, any>) => {
     const basePoints = createCircularCurveUV(0.5, [0.5, 0.5], 4).points;
     const trim: [number, number][] = basePoints.map(([u, v]) => [
       (u - 0.5) * Number(scale) + 0.5,
@@ -251,7 +219,7 @@ export const TrimmedBulgedSurface: Story = {
 };
 
 // === Story 2 ===
-export const TrimmedFlatEllipticalSurface: Story = {
+export const TrimmedFlatEllipticalSurface = {
   args: {
     color: "#3366ff",
     wireframe: false,
@@ -267,7 +235,7 @@ export const TrimmedFlatEllipticalSurface: Story = {
     trimCurveResolution = 200,
     adaptiveMaxAngleDeg = 5,
     adaptiveMaxDepth = 10,
-  }) => {
+  }: Record<string, any>) => {
     const numPoints = 6;
     const points: [number, number][] = Array.from(
       { length: numPoints },
@@ -346,7 +314,7 @@ export const TrimmedFlatEllipticalSurface: Story = {
 };
 
 // === Story 3 ===
-export const TrimmedSurfaceWithHole: Story = {
+export const TrimmedSurfaceWithHole = {
   args: {
     color: "#33cc33",
     wireframe: false,
@@ -362,7 +330,7 @@ export const TrimmedSurfaceWithHole: Story = {
     trimCurveResolution = 200,
     adaptiveMaxAngleDeg = 5,
     adaptiveMaxDepth = 10,
-  }) => {
+  }: Record<string, any>) => {
     const baseOuter = createCircularCurveUV(0.5, [0.5, 0.5], 6).points;
     const baseHole = createCircularCurveUV(0.5, [0.5, 0.5], 6).points;
     const outer: [number, number][] = baseOuter.map(([u, v]) => [
@@ -473,7 +441,8 @@ export const TrimmedSurfaceWithHole: Story = {
   },
 };
 
-export const TrimmedSurfaceClosedLoop: Story = {
+// === Story 4 ===
+export const TrimmedSurfaceClosedLoop = {
   args: {
     color: "#ffaa00",
     wireframe: false,
@@ -489,7 +458,7 @@ export const TrimmedSurfaceClosedLoop: Story = {
     trimCurveResolution = 200,
     adaptiveMaxAngleDeg = 5,
     adaptiveMaxDepth = 10,
-  }) => {
+  }: Record<string, any>) => {
     const numPoints = 6;
     const center: [number, number] = [0.5, 0.5];
 
@@ -583,7 +552,7 @@ function WorldSpaceTrimmedSurfaceDemo({
   curveX = 1.0,
   curveY = 1.0,
   scale = 0.4,
-}: WorldSpaceProps) {
+}: Record<string, any>) {
   const center: [number, number, number] = [curveX, curveY, 0.5];
   const numPoints = 6;
   const radius = 0.3 * scale;
@@ -672,7 +641,7 @@ function WorldSpaceTrimmedSurfaceDemo({
 }
 
 // === Story 5 ===
-export const WorldSpaceTrimmedSurface: Story = {
+export const WorldSpaceTrimmedSurface = {
   args: {
     color: "#ff00ff",
     wireframe: false,
@@ -683,15 +652,10 @@ export const WorldSpaceTrimmedSurface: Story = {
     world: true,
     curveX: 1.0,
     curveY: 1.0,
-  } as WorldSpaceProps,
-  render: (args: Props) => {
-    if ("curveX" in args && "curveY" in args && "scale" in args) {
-      return <WorldSpaceTrimmedSurfaceDemo {...args} />;
-    }
-    throw new Error(
-      "WorldSpaceTrimmedSurface requires curveX, curveY, and scale props"
-    );
   },
+  render: (args: Record<string, any>) => (
+    <WorldSpaceTrimmedSurfaceDemo {...args} />
+  ),
   parameters: {
     docs: {
       description: {

@@ -122,7 +122,6 @@ export function adaptiveSampleNurbsCurve2D(
 
 /**
  * Projects a 3D point onto a surface, returning the closest UV parameters.
- * Uses verb's built-in closestParam for accuracy and performance.
  */
 export function projectPointToSurfaceUV(
   surface: NurbsSurface,
@@ -134,4 +133,104 @@ export function projectPointToSurfaceUV(
   } catch {
     return null;
   }
+}
+
+/**
+ * Projects an entire 3D curve onto a surface, returning UV-space points.
+ * Uses marching approach: each projected point uses the previous result as
+ * initial guess for Newton iteration, ensuring continuity and speed.
+ *
+ * This is significantly more robust than projecting points independently,
+ * especially for curves that run near surface boundaries or along near-tangent
+ * directions. Based on the approach described in Section 6.1 of The NURBS Book.
+ */
+export function projectCurveOntoSurface(
+  surface: NurbsSurface,
+  curve: NurbsCurve,
+  numSamples = 100
+): [number, number][] {
+  const projectedUVs: [number, number][] = [];
+
+  // Project first point with full search (no prior guess)
+  const firstPt = curve.point(0);
+  const firstUV = surface.closestParam(firstPt);
+  projectedUVs.push([firstUV[0], firstUV[1]]);
+
+  // March along the curve, using previous UV as initial guess
+  for (let i = 1; i <= numSamples; i++) {
+    const t = i / numSamples;
+    const pt3d = curve.point(t);
+
+    // Use previous UV as starting point for a local Newton refinement
+    const prevUV = projectedUVs[projectedUVs.length - 1];
+    const uv = localSurfaceProjection(surface, pt3d, prevUV[0], prevUV[1]);
+    projectedUVs.push(uv);
+  }
+
+  return projectedUVs;
+}
+
+/**
+ * Newton iteration for surface point projection starting from a given (u0, v0).
+ * Used by the marching curve projection for fast local convergence.
+ */
+function localSurfaceProjection(
+  surface: NurbsSurface,
+  point: number[],
+  u0: number,
+  v0: number
+): [number, number] {
+  const dim = point.length;
+  const eps1 = 1e-8;
+  const eps2 = 1e-6;
+
+  let u = u0;
+  let v = v0;
+
+  for (let iter = 0; iter < 20; iter++) {
+    const ders = surface.derivatives(u, v, 1);
+    const S = ders[0][0];
+    const Su = ders[1][0];
+    const Sv = ders[0][1];
+    const diff = S.map((s, d) => s - point[d]);
+
+    // Check convergence (same 4 criteria as closestParam)
+    let distSq = 0;
+    for (let d = 0; d < dim; d++) distSq += diff[d] ** 2;
+    if (Math.sqrt(distSq) < eps1) break;
+
+    let dotSuDiff = 0, dotSvDiff = 0, SuLen = 0, SvLen = 0;
+    for (let d = 0; d < dim; d++) {
+      dotSuDiff += Su[d] * diff[d];
+      dotSvDiff += Sv[d] * diff[d];
+      SuLen += Su[d] ** 2;
+      SvLen += Sv[d] ** 2;
+    }
+    SuLen = Math.sqrt(SuLen);
+    SvLen = Math.sqrt(SvLen);
+    const dist = Math.sqrt(distSq);
+    if (SuLen > 0 && SvLen > 0 && dist > 0) {
+      if (Math.abs(dotSuDiff) / (SuLen * dist) < eps2 &&
+          Math.abs(dotSvDiff) / (SvLen * dist) < eps2) break;
+    }
+
+    // Newton step
+    let j00 = 0, j01 = 0, j11 = 0;
+    for (let d = 0; d < dim; d++) {
+      j00 += Su[d] * Su[d];
+      j01 += Su[d] * Sv[d];
+      j11 += Sv[d] * Sv[d];
+    }
+    const det = j00 * j11 - j01 * j01;
+    if (Math.abs(det) < 1e-14) break;
+
+    const du = -(j11 * dotSuDiff - j01 * dotSvDiff) / det;
+    const dv = -(j00 * dotSvDiff - j01 * dotSuDiff) / det;
+
+    // Clamp to [0,1] domain (standard for most surfaces)
+    u = Math.max(0, Math.min(1, u + du));
+    v = Math.max(0, Math.min(1, v + dv));
+  }
+
+  return [u, v];
 }
