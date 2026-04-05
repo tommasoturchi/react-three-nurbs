@@ -15,7 +15,7 @@ export interface CoonsPatchProps extends Omit<MeshProps, "geometry" | "ref"> {
   resolutionV?: number;
   color?: string;
   wireframe?: boolean;
-  children: React.ReactNode;
+  children: ReactElement | ReactElement[];
 }
 
 export const CoonsPatch = forwardRef<Mesh, CoonsPatchProps>(function CoonsPatch(

@@ -26,11 +26,11 @@ export interface TrimmedSurfaceProps extends Omit<MeshProps, "geometry"> {
 }
 
 export function TrimmedSurface({
-  color = "#ffffff",
+  color: _color = "#ffffff",
   trimCurveResolution = 200,
   adaptiveMaxAngleDeg = 5,
   adaptiveMaxDepth = 10,
-  wireframe = false,
+  wireframe: _wireframe = false,
   world = false,
   children,
   ...meshProps

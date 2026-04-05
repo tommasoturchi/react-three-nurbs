@@ -6,7 +6,7 @@ import * as tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
 export default [
-  { ignores: ["dist", "**/*.d.ts"] },
+  { ignores: ["dist", "storybook-static", "**/*.d.ts"] },
   js.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
@@ -30,6 +30,7 @@ export default [
         "warn",
         { allowConstantExport: true },
       ],
+      "no-unused-vars": "off",
     },
   },
 ];

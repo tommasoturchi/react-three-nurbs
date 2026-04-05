@@ -176,12 +176,8 @@ export class NurbsSurface {
           for (let d = 0; d < dim; d++) {
             v2[d] -= bin * wders[i][0] * SKL[k - i][l][d];
           }
-          let v3 = 0;
-          for (let j = 1; j <= l; j++) {
-            v3 += binomial(l, j) * wders[i][j];
-          }
-          // This is a simplification; for full accuracy with mixed partials > 1
-          // a more elaborate formula is needed, but for numDerivs=1 this is exact
+          // For mixed partials > 1, a more elaborate correction term is needed.
+          // For numDerivs=1 (the common case), this simplified form is exact.
         }
 
         for (let d = 0; d < dim; d++) {
