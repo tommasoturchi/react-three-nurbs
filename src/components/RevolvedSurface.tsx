@@ -1,6 +1,6 @@
 import { useMemo, isValidElement, Children } from "react";
 import type { ReactElement } from "react";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore, createRevolvedSurface } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
 import { DoubleSide } from "three";
@@ -76,18 +76,15 @@ export const RevolvedSurface = ({
       ];
 
       const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
-      const profileCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+      const profileCurve = NurbsCurveCore.byKnotsControlPointsWeights(
         degree,
         resolvedKnots,
         points,
         weights ?? defaultWeights
       );
 
-      const revolvedSurface = new verb.geom.RevolvedSurface(
-        profileCurve,
-        center,
-        normalizedAxis,
-        angle
+      const revolvedSurface = new NurbsSurfaceCore(
+        createRevolvedSurface(profileCurve.asData(), center, normalizedAxis, angle)
       );
 
       const vertices: number[] = [];

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore } from "../core";
 import { Line } from "@react-three/drei";
 import type { LineProps } from "@react-three/drei";
 import { generateUniformKnots } from "../utils/nurbs";
@@ -12,8 +12,8 @@ export interface OffsetCurveProps
   sourceDegree?: number;
   sourceKnots?: number[];
   sourceWeights?: number[];
-  /** Or provide a verb NurbsCurve directly */
-  sourceCurve?: verb.geom.NurbsCurve;
+  /** Or provide a NurbsCurve directly */
+  sourceCurve?: NurbsCurveCore;
   distance: number;
   planeNormal?: [number, number, number];
   samples?: number;
@@ -42,7 +42,7 @@ export const OffsetCurve = ({
       let source = sourceCurveProp ?? null;
       if (!source && sourcePoints && sourcePoints.length >= 2) {
         const knots = sourceKnots ?? generateUniformKnots(sourcePoints.length, sourceDegree);
-        source = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+        source = NurbsCurveCore.byKnotsControlPointsWeights(
           sourceDegree,
           knots,
           sourcePoints,
@@ -68,7 +68,7 @@ export const OffsetCurve = ({
         ]);
       }
 
-      const offsetCurve = verb.geom.NurbsCurve.byPoints(
+      const offsetCurve = NurbsCurveCore.byPoints(
         offsetPoints,
         Math.min(degree, offsetPoints.length - 1)
       );

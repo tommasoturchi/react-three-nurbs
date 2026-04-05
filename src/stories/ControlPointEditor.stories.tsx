@@ -4,7 +4,7 @@ import type { Mesh, Group } from "three";
 import type { Meta } from "@storybook/react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Stats } from "@react-three/drei";
-import verb from "verb-nurbs";
+import { NurbsSurface as NurbsSurfaceCore } from "../core";
 import { NurbsSurface } from "../components/NurbsSurface";
 import { useControlPointDrag } from "../hooks/useControlPointDrag";
 import { generateUniformKnots } from "../utils/nurbs";
@@ -122,7 +122,7 @@ function InteractiveSurface({
     try {
       const knotsU = generateUniformKnots(cp.length, 2);
       const knotsV = generateUniformKnots(cp[0].length, 2);
-      const surf = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+      const surf = NurbsSurfaceCore.byKnotsControlPointsWeights(
         2, 2, knotsU, knotsV, cp, weights
       );
 

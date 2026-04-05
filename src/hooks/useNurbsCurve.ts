@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve } from "../core";
 import { generateUniformKnots } from "../utils/nurbs";
 
 export interface UseNurbsCurveOptions {
@@ -12,7 +12,7 @@ export interface UseNurbsCurveOptions {
 }
 
 export interface UseNurbsCurveResult {
-  curve: verb.geom.NurbsCurve | null;
+  curve: NurbsCurve | null;
   points: Vector3[];
   point: (t: number) => Vector3 | null;
   tangent: (t: number) => Vector3 | null;
@@ -32,7 +32,7 @@ export function useNurbsCurve({
     try {
       const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
       const resolvedWeights = weights ?? Array(points.length).fill(1);
-      return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+      return NurbsCurve.byKnotsControlPointsWeights(
         degree,
         resolvedKnots,
         points,

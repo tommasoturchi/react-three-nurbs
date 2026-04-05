@@ -1,6 +1,6 @@
 import React, { useMemo, Children, isValidElement } from "react";
 import type { ReactElement } from "react";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
 import { DoubleSide } from "three";
@@ -48,14 +48,14 @@ export const LoftedSurface = ({
         const { points, degree = 3, weights, knots } = curve.props;
         const defaultWeights = Array(points.length).fill(1);
         const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
-        return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+        return NurbsCurveCore.byKnotsControlPointsWeights(
           degree,
           resolvedKnots,
           points,
           weights ?? defaultWeights
         );
       });
-      const loftedSurface = verb.geom.NurbsSurface.byLoftingCurves(
+      const loftedSurface = NurbsSurfaceCore.byLoftingCurves(
         nurbsCurves,
         degreeV
       );

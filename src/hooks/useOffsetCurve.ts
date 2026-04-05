@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve } from "../core";
 
 export interface UseOffsetCurveOptions {
-  curve: verb.geom.NurbsCurve | null;
+  curve: NurbsCurve | null;
   distance: number;
   planeNormal?: [number, number, number];
   samples?: number;
@@ -12,7 +12,7 @@ export interface UseOffsetCurveOptions {
 }
 
 export interface UseOffsetCurveResult {
-  curve: verb.geom.NurbsCurve | null;
+  curve: NurbsCurve | null;
   points: Vector3[];
 }
 
@@ -46,7 +46,7 @@ export function useOffsetCurve({
         ]);
       }
 
-      return verb.geom.NurbsCurve.byPoints(
+      return NurbsCurve.byPoints(
         offsetPoints,
         Math.min(degree, offsetPoints.length - 1)
       );

@@ -1,6 +1,6 @@
 import { useMemo, isValidElement, Children } from "react";
 import type { ReactElement } from "react";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore } from "../core";
 import type { MeshProps } from "@react-three/fiber";
 import { NurbsSurface } from "./NurbsSurface";
 import { NurbsCurve } from "./NurbsCurve";
@@ -66,7 +66,7 @@ export function TrimmedSurface({
       const knotsU = generateUniformKnots(surfaceProps.controlPoints.length, surfaceProps.degreeU);
       const knotsV = generateUniformKnots(surfaceProps.controlPoints[0].length, surfaceProps.degreeV);
 
-      const verbSurface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+      const verbSurface = NurbsSurfaceCore.byKnotsControlPointsWeights(
         surfaceProps.degreeU,
         surfaceProps.degreeV,
         knotsU,
@@ -79,7 +79,7 @@ export function TrimmedSurface({
         .map((child) => {
           const curveProps = child.props;
           const resolvedKnots = curveProps.knots ?? generateUniformKnots(curveProps.points.length, curveProps.degree ?? 2);
-          const curve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+          const curve = NurbsCurveCore.byKnotsControlPointsWeights(
             curveProps.degree ?? 2,
             resolvedKnots,
             curveProps.points,
@@ -97,7 +97,7 @@ export function TrimmedSurface({
             }
             if (projectedPoints.length > 0) {
               const projectedKnots = generateUniformKnots(projectedPoints.length, curveProps.degree ?? 2);
-              return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+              return NurbsCurveCore.byKnotsControlPointsWeights(
                 curveProps.degree ?? 2,
                 projectedKnots,
                 projectedPoints.map(([u, v]) => [u, v, 0]),
@@ -109,7 +109,7 @@ export function TrimmedSurface({
 
           return curve;
         })
-        .filter((curve): curve is verb.geom.NurbsCurve => curve !== null);
+        .filter((curve): curve is NurbsCurveCore => curve !== null);
 
       const uvLoops: [number, number][][] = trimmingCurves.map((curve) =>
         adaptiveSampleNurbsCurve2D(curve, adaptiveMaxAngleDeg, adaptiveMaxDepth)

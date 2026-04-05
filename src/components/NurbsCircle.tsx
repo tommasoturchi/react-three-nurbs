@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, createCircle } from "../core";
 import { Line } from "@react-three/drei";
 import type { LineProps } from "@react-three/drei";
 
@@ -25,7 +25,7 @@ export const NurbsCircle = ({
 }: NurbsCircleProps) => {
   const curvePoints = useMemo(() => {
     try {
-      const circle = new verb.geom.Circle(center, xaxis, yaxis, radius);
+      const circle = new NurbsCurveCore(createCircle(center, xaxis, yaxis, radius));
       return Array.from({ length: resolution + 1 }, (_, i) => {
         const t = i / resolution;
         const pt = circle.point(t);

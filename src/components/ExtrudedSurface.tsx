@@ -1,6 +1,6 @@
 import { useMemo, Children, isValidElement } from "react";
 import type { ReactElement } from "react";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore, createExtrudedSurface } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
 import { DoubleSide } from "three";
@@ -53,14 +53,16 @@ export const ExtrudedSurface = ({
       const defaultWeights = Array(points.length).fill(1);
       const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
 
-      const profileCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+      const profileCurve = NurbsCurveCore.byKnotsControlPointsWeights(
         degree,
         resolvedKnots,
         points,
         weights ?? defaultWeights
       );
 
-      const extrudedSurface = new verb.geom.ExtrudedSurface(profileCurve, direction);
+      const extrudedSurface = new NurbsSurfaceCore(
+        createExtrudedSurface(profileCurve.asData(), direction)
+      );
 
       const vertices: number[] = [];
       const normals: number[] = [];

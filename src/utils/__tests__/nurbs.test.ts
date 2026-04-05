@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import verb from "verb-nurbs";
+import { NurbsCurve, NurbsSurface } from "../../core";
 import {
   generateUniformKnots,
   computeNormal,
@@ -18,12 +18,12 @@ function createFlatSurface() {
   ];
   const w = [[1, 1, 1], [1, 1, 1], [1, 1, 1]];
   const knots = [0, 0, 0, 1, 1, 1];
-  return verb.geom.NurbsSurface.byKnotsControlPointsWeights(2, 2, knots, knots, cp, w);
+  return NurbsSurface.byKnotsControlPointsWeights(2, 2, knots, knots, cp, w);
 }
 
 // Helper: create a simple NURBS curve
 function createSimpleCurve() {
-  return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+  return NurbsCurve.byKnotsControlPointsWeights(
     2,
     [0, 0, 0, 1, 1, 1],
     [[0, 0, 0], [0.5, 1, 0], [1, 0, 0]],

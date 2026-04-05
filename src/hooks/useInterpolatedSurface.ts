@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import verb from "verb-nurbs";
+import { NurbsCurve, NurbsSurface } from "../core";
 import type { SurfaceGeometry } from "./useNurbsSurface";
 
 export interface UseInterpolatedSurfaceOptions {
@@ -11,7 +11,7 @@ export interface UseInterpolatedSurfaceOptions {
 }
 
 export interface UseInterpolatedSurfaceResult {
-  surface: verb.geom.NurbsSurface | null;
+  surface: NurbsSurface | null;
   geometry: SurfaceGeometry | null;
 }
 
@@ -31,11 +31,11 @@ export function useInterpolatedSurface({
     try {
       // Interpolate each row of points into a curve
       const rowCurves = points.map((row) =>
-        verb.geom.NurbsCurve.byPoints(row, Math.min(degreeU, row.length - 1))
+        NurbsCurve.byPoints(row, Math.min(degreeU, row.length - 1))
       );
 
       // Loft through all row curves
-      return verb.geom.NurbsSurface.byLoftingCurves(
+      return NurbsSurface.byLoftingCurves(
         rowCurves,
         Math.min(degreeV, rowCurves.length - 1)
       );

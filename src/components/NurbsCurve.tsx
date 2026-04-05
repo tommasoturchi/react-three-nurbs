@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore } from "../core";
 import { Line } from "@react-three/drei";
 import type { LineProps } from "@react-three/drei";
 import { generateUniformKnots } from "../utils/nurbs";
@@ -30,7 +30,7 @@ export const NurbsCurve = ({
     try {
       const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
       const defaultWeights = Array(points.length).fill(1);
-      const verbCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+      const verbCurve = NurbsCurveCore.byKnotsControlPointsWeights(
         degree,
         resolvedKnots,
         points,

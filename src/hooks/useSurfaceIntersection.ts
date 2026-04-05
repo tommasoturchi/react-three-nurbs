@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsSurface, intersectSurfaces } from "../core";
 import { generateUniformKnots } from "../utils/nurbs";
 
 export interface SurfaceDefinition {
@@ -26,10 +26,10 @@ export interface UseSurfaceIntersectionResult {
   curves: IntersectionCurve[];
 }
 
-function buildSurface(def: SurfaceDefinition): verb.geom.NurbsSurface {
+function buildSurface(def: SurfaceDefinition): NurbsSurface {
   const knotsU = def.knotsU ?? generateUniformKnots(def.controlPoints.length, def.degreeU);
   const knotsV = def.knotsV ?? generateUniformKnots(def.controlPoints[0].length, def.degreeV);
-  return verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+  return NurbsSurface.byKnotsControlPointsWeights(
     def.degreeU,
     def.degreeV,
     knotsU,
@@ -51,7 +51,7 @@ export function useSurfaceIntersection({
       const verbSurface0 = buildSurface(surface0);
       const verbSurface1 = buildSurface(surface1);
 
-      const intersections = verb.eval.Intersect.surfaces(
+      const intersections = intersectSurfaces(
         verbSurface0,
         verbSurface1,
         tolerance

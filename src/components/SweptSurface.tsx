@@ -1,6 +1,6 @@
 import { useMemo, Children, isValidElement } from "react";
 import type { ReactElement } from "react";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore, createSweptSurface } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
 import { DoubleSide } from "three";
@@ -54,7 +54,7 @@ export const SweptSurface = ({
       const makeCurve = (props: NurbsCurveProps) => {
         const { points, degree = 3, weights, knots } = props;
         const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
-        return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+        return NurbsCurveCore.byKnotsControlPointsWeights(
           degree,
           resolvedKnots,
           points,
@@ -65,7 +65,9 @@ export const SweptSurface = ({
       const profileCurve = makeCurve(profileChild.props);
       const railCurve = makeCurve(railChild.props);
 
-      const sweptSurface = new verb.geom.SweptSurface(profileCurve, railCurve);
+      const sweptSurface = new NurbsSurfaceCore(
+        createSweptSurface(profileCurve.asData(), railCurve.asData())
+      );
 
       const vertices: number[] = [];
       const normals: number[] = [];

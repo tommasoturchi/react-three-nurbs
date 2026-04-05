@@ -3,7 +3,7 @@ import type { Meta } from "@storybook/react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Line } from "@react-three/drei";
 import { DoubleSide, Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsSurface as NurbsSurfaceCore } from "../core";
 import { NurbsSurface } from "../components/NurbsSurface";
 import { generateUniformKnots } from "../utils/nurbs";
 
@@ -74,7 +74,7 @@ function useIntersectionContour(height: number, resolution: number) {
   return useMemo(() => {
     const knotsU = generateUniformKnots(4, 3);
     const knotsV = generateUniformKnots(4, 3);
-    const surface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+    const surface = NurbsSurfaceCore.byKnotsControlPointsWeights(
       3, 3, knotsU, knotsV, cpDome, wDome
     );
 

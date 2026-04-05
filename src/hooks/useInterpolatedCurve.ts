@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve } from "../core";
 
 export interface UseInterpolatedCurveOptions {
   throughPoints: number[][];
@@ -9,7 +9,7 @@ export interface UseInterpolatedCurveOptions {
 }
 
 export interface UseInterpolatedCurveResult {
-  curve: verb.geom.NurbsCurve | null;
+  curve: NurbsCurve | null;
   points: Vector3[];
   point: (t: number) => Vector3 | null;
   tangent: (t: number) => Vector3 | null;
@@ -23,7 +23,7 @@ export function useInterpolatedCurve({
   const curve = useMemo(() => {
     if (!throughPoints || throughPoints.length < 2) return null;
     try {
-      return verb.geom.NurbsCurve.byPoints(throughPoints, degree);
+      return NurbsCurve.byPoints(throughPoints, degree);
     } catch (error) {
       console.error("useInterpolatedCurve: Error creating curve:", error);
       return null;

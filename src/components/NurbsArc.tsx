@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, createArc } from "../core";
 import { Line } from "@react-three/drei";
 import type { LineProps } from "@react-three/drei";
 
@@ -29,7 +29,7 @@ export const NurbsArc = ({
 }: NurbsArcProps) => {
   const curvePoints = useMemo(() => {
     try {
-      const arc = new verb.geom.Arc(center, xaxis, yaxis, radius, startAngle, endAngle);
+      const arc = new NurbsCurveCore(createArc(center, xaxis, yaxis, radius, startAngle, endAngle));
       return Array.from({ length: resolution + 1 }, (_, i) => {
         const t = i / resolution;
         const pt = arc.point(t);

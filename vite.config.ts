@@ -22,7 +22,6 @@ export default defineConfig({
         "three",
         "@react-three/fiber",
         "@react-three/drei",
-        "verb-nurbs",
       ],
       output: {
         globals: {
@@ -31,7 +30,6 @@ export default defineConfig({
           three: "THREE",
           "@react-three/fiber": "ReactThreeFiber",
           "@react-three/drei": "Drei",
-          "verb-nurbs": "VerbNurbs",
         },
       },
     },

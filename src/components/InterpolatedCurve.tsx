@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore } from "../core";
 import { Line } from "@react-three/drei";
 import type { LineProps } from "@react-three/drei";
 
@@ -22,7 +22,7 @@ export const InterpolatedCurve = ({
   const curvePoints = useMemo(() => {
     if (!throughPoints || throughPoints.length < 2) return [];
     try {
-      const curve = verb.geom.NurbsCurve.byPoints(throughPoints, degree);
+      const curve = NurbsCurveCore.byPoints(throughPoints, degree);
       return Array.from({ length: resolution + 1 }, (_, i) => {
         const t = i / resolution;
         const pt = curve.point(t);

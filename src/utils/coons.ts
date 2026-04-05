@@ -1,5 +1,5 @@
 import { Float32BufferAttribute, BufferGeometry } from "three";
-import verb from "verb-nurbs";
+import type { NurbsCurve } from "../core";
 
 /**
  * Computes a bilinear Coons patch from 4 boundary curves.
@@ -17,10 +17,10 @@ import verb from "verb-nurbs";
  * Corner points: P00=bottom(0), P10=bottom(1), P01=top(0), P11=top(1)
  */
 export function computeCoonsPatch(
-  bottom: verb.geom.NurbsCurve,
-  top: verb.geom.NurbsCurve,
-  left: verb.geom.NurbsCurve,
-  right: verb.geom.NurbsCurve,
+  bottom: NurbsCurve,
+  top: NurbsCurve,
+  left: NurbsCurve,
+  right: NurbsCurve,
   resolutionU: number,
   resolutionV: number,
 ): BufferGeometry {

@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import type { NurbsSurface as NurbsSurfaceCore } from "../core";
 import { Line } from "@react-three/drei";
 
 export interface IsoCurvesProps {
-  surface: verb.geom.NurbsSurface;
+  surface: NurbsSurfaceCore;
   countU?: number;
   countV?: number;
   color?: string;

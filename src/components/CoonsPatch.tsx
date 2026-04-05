@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { DoubleSide } from "three";
 import type { Mesh, BufferGeometry } from "three";
 import type { MeshProps } from "@react-three/fiber";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore } from "../core";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
 import { isMaterialElement } from "../utils/materials";
@@ -55,7 +55,7 @@ export const CoonsPatch = forwardRef<Mesh, CoonsPatchProps>(function CoonsPatch(
       const curves = curveChildren.map((child) => {
         const { points, degree = 3, weights, knots } = child.props;
         const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
-        return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+        return NurbsCurveCore.byKnotsControlPointsWeights(
           degree,
           resolvedKnots,
           points,

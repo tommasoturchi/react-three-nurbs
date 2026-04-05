@@ -1,6 +1,6 @@
 import { useMemo, useRef, forwardRef, Children } from "react";
 import type { ReactElement } from "react";
-import verb from "verb-nurbs";
+import { NurbsSurface as NurbsSurfaceCore } from "../core";
 import { DoubleSide, BufferGeometry, Float32BufferAttribute } from "three";
 import type { Mesh } from "three";
 import type { MeshProps } from "@react-three/fiber";
@@ -62,7 +62,7 @@ export const NurbsSurface = forwardRef<Mesh, NurbsSurfaceProps>(function NurbsSu
       const knotsU = knotsUProp ?? generateUniformKnots(controlPoints.length, degreeU);
       const knotsV = knotsVProp ?? generateUniformKnots(controlPoints[0].length, degreeV);
 
-      const verbSurface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+      const verbSurface = NurbsSurfaceCore.byKnotsControlPointsWeights(
         degreeU, degreeV, knotsU, knotsV, controlPoints, weights
       );
 

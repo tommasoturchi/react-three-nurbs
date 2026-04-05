@@ -1,5 +1,6 @@
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import type { NurbsCurve } from "../core";
+import type { NurbsSurface } from "../core";
 
 /**
  * Generates a clamped uniform knot vector for given number of control points and degree.
@@ -22,7 +23,7 @@ export function generateUniformKnots(
  * Evaluates a surface point and wraps it in a Vector3.
  */
 export function projectPointToSurface(
-  surface: verb.geom.NurbsSurface,
+  surface: NurbsSurface,
   u: number,
   v: number
 ): Vector3 {
@@ -34,7 +35,7 @@ export function projectPointToSurface(
  * Computes the surface normal at (u, v) using verb's analytical normal.
  */
 export function computeNormal(
-  surface: verb.geom.NurbsSurface,
+  surface: NurbsSurface,
   u: number,
   v: number
 ): Vector3 {
@@ -60,7 +61,7 @@ export function computeNormal(
  * Uniformly samples a NURBS curve in 2D (UV space).
  */
 export function sampleNurbsCurve2D(
-  curve: verb.geom.NurbsCurve,
+  curve: NurbsCurve,
   numPoints = 100
 ): [number, number][] {
   return Array.from({ length: numPoints }, (_, i) => {
@@ -74,7 +75,7 @@ export function sampleNurbsCurve2D(
  * Adaptively samples a NURBS curve in 2D (UV space) based on angle threshold.
  */
 export function adaptiveSampleNurbsCurve2D(
-  curve: verb.geom.NurbsCurve,
+  curve: NurbsCurve,
   maxAngleDeg = 5,
   maxDepth = 10
 ): [number, number][] {
@@ -124,7 +125,7 @@ export function adaptiveSampleNurbsCurve2D(
  * Uses verb's built-in closestParam for accuracy and performance.
  */
 export function projectPointToSurfaceUV(
-  surface: verb.geom.NurbsSurface,
+  surface: NurbsSurface,
   point: number[]
 ): [number, number] | null {
   try {

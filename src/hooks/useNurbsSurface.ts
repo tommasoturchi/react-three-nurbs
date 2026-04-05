@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { Vector3 } from "three";
-import verb from "verb-nurbs";
+import { NurbsSurface } from "../core";
 import { generateUniformKnots } from "../utils/nurbs";
 
 export interface UseNurbsSurfaceOptions {
@@ -22,7 +22,7 @@ export interface SurfaceGeometry {
 }
 
 export interface UseNurbsSurfaceResult {
-  surface: verb.geom.NurbsSurface | null;
+  surface: NurbsSurface | null;
   geometry: SurfaceGeometry | null;
   point: (u: number, v: number) => Vector3 | null;
   normal: (u: number, v: number) => Vector3 | null;
@@ -44,7 +44,7 @@ export function useNurbsSurface({
     try {
       const resolvedKnotsU = knotsU ?? generateUniformKnots(controlPoints.length, degreeU);
       const resolvedKnotsV = knotsV ?? generateUniformKnots(controlPoints[0].length, degreeV);
-      return verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+      return NurbsSurface.byKnotsControlPointsWeights(
         degreeU,
         degreeV,
         resolvedKnotsU,

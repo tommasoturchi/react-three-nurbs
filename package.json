@@ -54,8 +54,7 @@
     "earcut": "^3.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "three": "^0.161.0",
-    "verb-nurbs": "^3.0.3"
+    "three": "^0.161.0"
   },
   "devDependencies": {
     "@storybook/addon-essentials": "^8.6.12",

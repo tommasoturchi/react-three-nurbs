@@ -6,7 +6,7 @@ import { TrimmedSurface } from "../components/TrimmedSurface";
 import { NurbsSurface } from "../components/NurbsSurface";
 import { NurbsCurve } from "../components/NurbsCurve";
 import { Line } from "@react-three/drei";
-import verb from "verb-nurbs";
+import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore } from "../core";
 import { sampleNurbsCurve2D } from "../utils/nurbs";
 
 type BaseProps = {
@@ -194,7 +194,7 @@ export const TrimmedBulgedSurface: Story = {
         if (i >= trim.length) return 1;
         return (i - 2) / (trim.length - 2);
       });
-    const surface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+    const surface = NurbsSurfaceCore.byKnotsControlPointsWeights(
       2,
       2,
       [0, 0, 0, 1, 1, 1],
@@ -202,7 +202,7 @@ export const TrimmedBulgedSurface: Story = {
       controlPoints,
       weights
     );
-    const nurbsTrim = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+    const nurbsTrim = NurbsCurveCore.byKnotsControlPointsWeights(
       2,
       knots,
       trim.map(([u, v]) => [u, v, 0]),
@@ -289,7 +289,7 @@ export const TrimmedFlatEllipticalSurface: Story = {
           ? 1
           : (i - degree) / (numPoints - degree)
       );
-    const surface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+    const surface = NurbsSurfaceCore.byKnotsControlPointsWeights(
       2,
       2,
       [0, 0, 0, 1, 1, 1],
@@ -297,7 +297,7 @@ export const TrimmedFlatEllipticalSurface: Story = {
       controlPoints,
       weights
     );
-    const curve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+    const curve = NurbsCurveCore.byKnotsControlPointsWeights(
       degree,
       knots,
       points.map(([u, v]) => [u, v, 0]),
@@ -374,7 +374,7 @@ export const TrimmedSurfaceWithHole: Story = {
       (v - 0.5) * (Number(scale) * 0.33) + 0.5,
     ]);
 
-    const surface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+    const surface = NurbsSurfaceCore.byKnotsControlPointsWeights(
       2,
       2,
       [0, 0, 0, 1, 1, 1],
@@ -383,7 +383,7 @@ export const TrimmedSurfaceWithHole: Story = {
       weights
     );
 
-    const outerCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+    const outerCurve = NurbsCurveCore.byKnotsControlPointsWeights(
       2,
       Array(outer.length + 3)
         .fill(0)
@@ -396,7 +396,7 @@ export const TrimmedSurfaceWithHole: Story = {
       Array(outer.length).fill(1)
     );
 
-    const holeCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+    const holeCurve = NurbsCurveCore.byKnotsControlPointsWeights(
       2,
       Array(hole.length + 3)
         .fill(0)
@@ -514,7 +514,7 @@ export const TrimmedSurfaceClosedLoop: Story = {
         return (i - degree) / (closedPoints.length - degree);
       });
 
-    const surface = verb.geom.NurbsSurface.byKnotsControlPointsWeights(
+    const surface = NurbsSurfaceCore.byKnotsControlPointsWeights(
       2,
       2,
       [0, 0, 0, 1, 1, 1],
@@ -523,7 +523,7 @@ export const TrimmedSurfaceClosedLoop: Story = {
       weights
     );
 
-    const closedCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+    const closedCurve = NurbsCurveCore.byKnotsControlPointsWeights(
       degree,
       knots,
       closedPoints.map(([u, v]) => [u, v, 0]),
@@ -611,7 +611,7 @@ function WorldSpaceTrimmedSurfaceDemo({
       return (i - degree) / (worldPoints.length - degree);
     });
 
-  const worldCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
+  const worldCurve = NurbsCurveCore.byKnotsControlPointsWeights(
     degree,
     knots,
     worldPoints,
