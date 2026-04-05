@@ -3,13 +3,14 @@ import { Vector3 } from "three";
 import verb from "verb-nurbs";
 import { Line } from "@react-three/drei";
 import type { LineProps } from "@react-three/drei";
+import { generateUniformKnots } from "../utils/nurbs";
 
 export interface NurbsCurveProps
   extends Omit<LineProps, "points" | "resolution"> {
   points: number[][];
   degree?: number;
   weights?: number[];
-  knots: number[];
+  knots?: number[];
   resolution?: number;
 }
 
@@ -26,17 +27,12 @@ export const NurbsCurve = ({
   ...lineProps
 }: NurbsCurveProps) => {
   const curvePoints = useMemo(() => {
-    if (!knots) {
-      console.error("NurbsCurve requires knots to be provided");
-      return [];
-    }
-
     try {
-      // If weights are not provided, use array of 1s
+      const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
       const defaultWeights = Array(points.length).fill(1);
       const verbCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
         degree,
-        knots,
+        resolvedKnots,
         points,
         weights ?? defaultWeights
       );

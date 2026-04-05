@@ -582,10 +582,11 @@ function WorldSpaceTrimmedSurfaceDemo({
   world = true,
   curveX = 1.0,
   curveY = 1.0,
+  scale = 0.4,
 }: WorldSpaceProps) {
   const center: [number, number, number] = [curveX, curveY, 0.5];
   const numPoints = 6;
-  const radius = 0.3;
+  const radius = 0.3 * scale;
 
   // Create a circular curve in 3D space
   const worldPoints: [number, number, number][] = Array.from(

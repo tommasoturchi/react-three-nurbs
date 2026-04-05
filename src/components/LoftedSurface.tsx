@@ -1,9 +1,11 @@
-import { useMemo, Children, isValidElement } from "react";
+import React, { useMemo, Children, isValidElement } from "react";
 import type { ReactElement } from "react";
 import verb from "verb-nurbs";
 import { NurbsCurve } from "./NurbsCurve";
 import type { NurbsCurveProps } from "./NurbsCurve";
 import { DoubleSide } from "three";
+import { generateUniformKnots } from "../utils/nurbs";
+import { isMaterialElement } from "../utils/materials";
 
 export interface LoftedSurfaceProps {
   degreeV?: number;
@@ -11,7 +13,7 @@ export interface LoftedSurfaceProps {
   resolutionV?: number;
   color?: string;
   wireframe?: boolean;
-  children: ReactElement<NurbsCurveProps>[] | ReactElement[];
+  children: React.ReactNode;
 }
 
 export const LoftedSurface = ({
@@ -29,12 +31,7 @@ export const LoftedSurface = ({
     Children.forEach(children, (child) => {
       if (isValidElement(child) && child.type === NurbsCurve) {
         curveChildren.push(child as ReactElement<NurbsCurveProps>);
-      } else if (
-        isValidElement(child) &&
-        child.type &&
-        (child.type as any).prototype &&
-        "isMaterial" in (child.type as any).prototype
-      ) {
+      } else if (isMaterialElement(child)) {
         materialChild = child as ReactElement;
       }
     });
@@ -50,9 +47,10 @@ export const LoftedSurface = ({
       const nurbsCurves = curveChildren.map((curve) => {
         const { points, degree = 3, weights, knots } = curve.props;
         const defaultWeights = Array(points.length).fill(1);
+        const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
         return verb.geom.NurbsCurve.byKnotsControlPointsWeights(
           degree,
-          knots,
+          resolvedKnots,
           points,
           weights ?? defaultWeights
         );

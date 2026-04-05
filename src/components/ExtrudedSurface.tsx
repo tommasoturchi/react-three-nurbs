@@ -1,4 +1,4 @@
-import { useMemo, isValidElement, Children } from "react";
+import { useMemo, Children, isValidElement } from "react";
 import type { ReactElement } from "react";
 import verb from "verb-nurbs";
 import { NurbsCurve } from "./NurbsCurve";
@@ -8,10 +8,8 @@ import type { MeshProps } from "@react-three/fiber";
 import { generateUniformKnots } from "../utils/nurbs";
 import { isMaterialElement } from "../utils/materials";
 
-export interface RevolvedSurfaceProps extends Omit<MeshProps, "geometry"> {
-  center?: [number, number, number];
-  axis?: [number, number, number];
-  angle?: number;
+export interface ExtrudedSurfaceProps extends Omit<MeshProps, "geometry"> {
+  direction: [number, number, number];
   resolutionU?: number;
   resolutionV?: number;
   color?: string;
@@ -19,17 +17,15 @@ export interface RevolvedSurfaceProps extends Omit<MeshProps, "geometry"> {
   children: ReactElement<NurbsCurveProps> | ReactElement[];
 }
 
-export const RevolvedSurface = ({
-  center = [0, 0, 0],
-  axis = [1, 0, 0],
-  angle = 2 * Math.PI,
+export const ExtrudedSurface = ({
+  direction,
   resolutionU = 20,
   resolutionV = 20,
   color = "#ff0000",
   wireframe = false,
   children,
   ...meshProps
-}: RevolvedSurfaceProps) => {
+}: ExtrudedSurfaceProps) => {
   const { profileChild, materialChild } = useMemo(() => {
     let profileChild: ReactElement<NurbsCurveProps> | null = null;
     let materialChild: ReactElement | null = null;
@@ -48,34 +44,15 @@ export const RevolvedSurface = ({
 
   const geometry = useMemo(() => {
     if (!profileChild) {
-      console.error("RevolvedSurface requires a NurbsCurve child");
+      console.error("ExtrudedSurface requires a NurbsCurve child");
       return null;
     }
 
     try {
       const { points, degree = 3, weights, knots } = profileChild.props;
       const defaultWeights = Array(points.length).fill(1);
-
-      if (!points || points.length < 2) {
-        console.error("Profile curve must have at least 2 points");
-        return null;
-      }
-
-      // Normalize the axis vector
-      const axisLength = Math.sqrt(
-        axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]
-      );
-      if (axisLength === 0) {
-        console.error("Axis vector cannot be zero");
-        return null;
-      }
-      const normalizedAxis: [number, number, number] = [
-        axis[0] / axisLength,
-        axis[1] / axisLength,
-        axis[2] / axisLength,
-      ];
-
       const resolvedKnots = knots ?? generateUniformKnots(points.length, degree);
+
       const profileCurve = verb.geom.NurbsCurve.byKnotsControlPointsWeights(
         degree,
         resolvedKnots,
@@ -83,14 +60,10 @@ export const RevolvedSurface = ({
         weights ?? defaultWeights
       );
 
-      const revolvedSurface = new verb.geom.RevolvedSurface(
-        profileCurve,
-        center,
-        normalizedAxis,
-        angle
-      );
+      const extrudedSurface = new verb.geom.ExtrudedSurface(profileCurve, direction);
 
       const vertices: number[] = [];
+      const normals: number[] = [];
       const indices: number[] = [];
       const uvs: number[] = [];
 
@@ -98,9 +71,21 @@ export const RevolvedSurface = ({
         for (let j = 0; j <= resolutionV; j++) {
           const u = i / resolutionU;
           const v = j / resolutionV;
-          const point = revolvedSurface.point(u, v);
+          const point = extrudedSurface.point(u, v);
           vertices.push(point[0], point[1], point[2]);
           uvs.push(u, v);
+
+          try {
+            const n = extrudedSurface.normal(u, v);
+            const len = Math.sqrt(n[0] ** 2 + n[1] ** 2 + n[2] ** 2);
+            if (len > 0) {
+              normals.push(n[0] / len, n[1] / len, n[2] / len);
+            } else {
+              normals.push(0, 1, 0);
+            }
+          } catch {
+            normals.push(0, 1, 0);
+          }
         }
       }
 
@@ -116,12 +101,12 @@ export const RevolvedSurface = ({
         }
       }
 
-      return { vertices, indices, uvs };
+      return { vertices, normals, indices, uvs };
     } catch (error) {
-      console.error("Error creating revolved surface:", error);
+      console.error("Error creating extruded surface:", error);
       return null;
     }
-  }, [profileChild, center, axis, angle, resolutionU, resolutionV]);
+  }, [profileChild, direction, resolutionU, resolutionV]);
 
   if (!geometry) return null;
 
@@ -132,6 +117,12 @@ export const RevolvedSurface = ({
           attach="attributes-position"
           count={geometry.vertices.length / 3}
           array={new Float32Array(geometry.vertices)}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-normal"
+          count={geometry.normals.length / 3}
+          array={new Float32Array(geometry.normals)}
           itemSize={3}
         />
         <bufferAttribute

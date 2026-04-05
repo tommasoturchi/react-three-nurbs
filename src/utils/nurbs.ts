@@ -1,6 +1,26 @@
 import { Vector3 } from "three";
 import verb from "verb-nurbs";
 
+/**
+ * Generates a clamped uniform knot vector for given number of control points and degree.
+ */
+export function generateUniformKnots(
+  numControlPoints: number,
+  degree: number
+): number[] {
+  const numKnots = numControlPoints + degree + 1;
+  return Array(numKnots)
+    .fill(0)
+    .map((_, i) => {
+      if (i < degree + 1) return 0;
+      if (i >= numKnots - degree - 1) return 1;
+      return (i - degree) / (numKnots - 2 * degree - 1);
+    });
+}
+
+/**
+ * Evaluates a surface point and wraps it in a Vector3.
+ */
 export function projectPointToSurface(
   surface: verb.geom.NurbsSurface,
   u: number,
@@ -10,24 +30,37 @@ export function projectPointToSurface(
   return new Vector3(pt[0], pt[1], pt[2]);
 }
 
+/**
+ * Computes the surface normal at (u, v) using verb's analytical normal.
+ */
 export function computeNormal(
   surface: verb.geom.NurbsSurface,
   u: number,
-  v: number,
-  epsilon = 0.0001
+  v: number
 ): Vector3 {
-  const p = surface.point(u, v);
-  const pu = surface.point(u + epsilon, v);
-  const pv = surface.point(u, v + epsilon);
-
-  const du = new Vector3().subVectors(new Vector3(...pu), new Vector3(...p));
-  const dv = new Vector3().subVectors(new Vector3(...pv), new Vector3(...p));
-
-  return new Vector3().crossVectors(du, dv).normalize();
+  try {
+    const n = surface.normal(u, v);
+    const vec = new Vector3(n[0], n[1], n[2]);
+    const len = vec.length();
+    return len > 0 ? vec.divideScalar(len) : new Vector3(0, 1, 0);
+  } catch {
+    // Fallback to finite differences at domain boundaries
+    const epsilon = 0.0001;
+    const p = surface.point(u, v);
+    const pu = surface.point(Math.min(u + epsilon, 1), v);
+    const pv = surface.point(u, Math.min(v + epsilon, 1));
+    const du = new Vector3().subVectors(new Vector3(...pu), new Vector3(...p));
+    const dv = new Vector3().subVectors(new Vector3(...pv), new Vector3(...p));
+    const normal = new Vector3().crossVectors(du, dv).normalize();
+    return normal.length() > 0 ? normal : new Vector3(0, 1, 0);
+  }
 }
 
+/**
+ * Uniformly samples a NURBS curve in 2D (UV space).
+ */
 export function sampleNurbsCurve2D(
-  curve: any,
+  curve: verb.geom.NurbsCurve,
   numPoints = 100
 ): [number, number][] {
   return Array.from({ length: numPoints }, (_, i) => {
@@ -37,9 +70,11 @@ export function sampleNurbsCurve2D(
   });
 }
 
-// Adaptive sampling for NURBS curve in 2D (UV space)
+/**
+ * Adaptively samples a NURBS curve in 2D (UV space) based on angle threshold.
+ */
 export function adaptiveSampleNurbsCurve2D(
-  curve: any,
+  curve: verb.geom.NurbsCurve,
   maxAngleDeg = 5,
   maxDepth = 10
 ): [number, number][] {
@@ -51,7 +86,7 @@ export function adaptiveSampleNurbsCurve2D(
     const magAB = Math.sqrt(ab[0] * ab[0] + ab[1] * ab[1]);
     const magBC = Math.sqrt(bc[0] * bc[0] + bc[1] * bc[1]);
     if (magAB === 0 || magBC === 0) return 0;
-    let angle = Math.acos(Math.max(-1, Math.min(1, dot / (magAB * magBC))));
+    const angle = Math.acos(Math.max(-1, Math.min(1, dot / (magAB * magBC))));
     return angle * (180 / Math.PI);
   };
 
@@ -61,7 +96,6 @@ export function adaptiveSampleNurbsCurve2D(
     const p2 = toVec2(curve.point(t1));
     const angle = angleBetween(p0, p1, p2);
     if (angle > maxAngleDeg && depth < maxDepth) {
-      // Subdivide further
       const left = subdivide(t0, (t0 + t1) / 2, depth + 1);
       const right = subdivide((t0 + t1) / 2, t1, depth + 1);
       return [...left.slice(0, -1), ...right];
@@ -85,82 +119,18 @@ export function adaptiveSampleNurbsCurve2D(
   return points;
 }
 
+/**
+ * Projects a 3D point onto a surface, returning the closest UV parameters.
+ * Uses verb's built-in closestParam for accuracy and performance.
+ */
 export function projectPointToSurfaceUV(
   surface: verb.geom.NurbsSurface,
-  point: number[],
-  resolution = 20
+  point: number[]
 ): [number, number] | null {
-  // Grid search for initial guess
-  let minDist = Infinity;
-  let bestUV: [number, number] | null = null;
-
-  // Search in UV space
-  for (let i = 0; i <= resolution; i++) {
-    for (let j = 0; j <= resolution; j++) {
-      const u = i / resolution;
-      const v = j / resolution;
-      const surfacePoint = surface.point(u, v);
-      const dist = Math.sqrt(
-        Math.pow(surfacePoint[0] - point[0], 2) +
-        Math.pow(surfacePoint[1] - point[1], 2) +
-        Math.pow(surfacePoint[2] - point[2], 2)
-      );
-      if (dist < minDist) {
-        minDist = dist;
-        bestUV = [u, v];
-      }
-    }
+  try {
+    const uv = surface.closestParam(point);
+    return [uv[0], uv[1]];
+  } catch {
+    return null;
   }
-
-  if (!bestUV) return null;
-
-  // Simple gradient descent to refine the solution
-  const epsilon = 0.0001;
-  const stepSize = 0.01;
-  const maxIterations = 100;
-  let [u, v] = bestUV;
-
-  for (let iter = 0; iter < maxIterations; iter++) {
-    const p = surface.point(u, v);
-    const pu = surface.point(u + epsilon, v);
-    const pv = surface.point(u, v + epsilon);
-
-    // Compute gradients
-    const du = [
-      (pu[0] - p[0]) / epsilon,
-      (pu[1] - p[1]) / epsilon,
-      (pu[2] - p[2]) / epsilon,
-    ];
-    const dv = [
-      (pv[0] - p[0]) / epsilon,
-      (pv[1] - p[1]) / epsilon,
-      (pv[2] - p[2]) / epsilon,
-    ];
-
-    // Compute distance gradients
-    const distU = 2 * (
-      du[0] * (p[0] - point[0]) +
-      du[1] * (p[1] - point[1]) +
-      du[2] * (p[2] - point[2])
-    );
-    const distV = 2 * (
-      dv[0] * (p[0] - point[0]) +
-      dv[1] * (p[1] - point[1]) +
-      dv[2] * (p[2] - point[2])
-    );
-
-    // Update UV coordinates
-    const newU = Math.max(0, Math.min(1, u - stepSize * distU));
-    const newV = Math.max(0, Math.min(1, v - stepSize * distV));
-
-    // Check convergence
-    if (Math.abs(newU - u) < epsilon && Math.abs(newV - v) < epsilon) {
-      return [newU, newV];
-    }
-
-    u = newU;
-    v = newV;
-  }
-
-  return [u, v];
-} 
+}
