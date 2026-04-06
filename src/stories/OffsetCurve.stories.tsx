@@ -5,7 +5,7 @@ import { NurbsCurve } from "../components/NurbsCurve";
 import { OffsetCurve } from "../components/OffsetCurve";
 
 const meta = {
-  title: "Components/OffsetCurve",
+  title: "Curves/OffsetCurve",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

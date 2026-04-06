@@ -145,7 +145,8 @@ export function TrimmedSurface({
       }
 
       // Imperatively update geometry (same pattern as NurbsSurface)
-      const geo = geometryRef.current ?? new BufferGeometry();
+      if (geometryRef.current) geometryRef.current.dispose();
+      const geo = new BufferGeometry();
       geo.setAttribute("position", new Float32BufferAttribute(positions, 3));
       geo.setAttribute("normal", new Float32BufferAttribute(normals, 3));
       geo.setAttribute("uv", new Float32BufferAttribute(uvParams, 2));

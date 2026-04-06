@@ -95,7 +95,8 @@ export const RevolvedSurface = ({
         }
       }
 
-      const geo = geometryRef.current ?? new BufferGeometry();
+      if (geometryRef.current) geometryRef.current.dispose();
+      const geo = new BufferGeometry();
       geo.setAttribute("position", new Float32BufferAttribute(vertices, 3));
       geo.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
       geo.setIndex(indices);

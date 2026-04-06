@@ -6,7 +6,7 @@ import { ExtrudedSurface } from "../components/ExtrudedSurface";
 import { NurbsCurve } from "../components/NurbsCurve";
 
 const meta = {
-  title: "Components/ExtrudedSurface",
+  title: "Surfaces/ExtrudedSurface",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

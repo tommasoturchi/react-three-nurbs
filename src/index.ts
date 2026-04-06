@@ -14,6 +14,9 @@ export { NurbsArc } from "./components/NurbsArc";
 export { IsoCurves } from "./components/IsoCurves";
 export { CoonsPatch } from "./components/CoonsPatch";
 export { OffsetCurve } from "./components/OffsetCurve";
+export { NurbsEllipse } from "./components/NurbsEllipse";
+export { NurbsEllipseArc } from "./components/NurbsEllipseArc";
+export { CylindricalSurface } from "./components/CylindricalSurface";
 
 // Hooks
 export { useNurbsCurve } from "./hooks/useNurbsCurve";
@@ -70,6 +73,9 @@ export type { NurbsArcProps } from "./components/NurbsArc";
 export type { IsoCurvesProps } from "./components/IsoCurves";
 export type { CoonsPatchProps } from "./components/CoonsPatch";
 export type { OffsetCurveProps } from "./components/OffsetCurve";
+export type { NurbsEllipseProps } from "./components/NurbsEllipse";
+export type { NurbsEllipseArcProps } from "./components/NurbsEllipseArc";
+export type { CylindricalSurfaceProps } from "./components/CylindricalSurface";
 export type { UseNurbsCurveOptions, UseNurbsCurveResult } from "./hooks/useNurbsCurve";
 export type { UseNurbsSurfaceOptions, UseNurbsSurfaceResult, SurfaceGeometry } from "./hooks/useNurbsSurface";
 export type { UseControlPointDragOptions, UseControlPointDragResult, ControlPointHandle } from "./hooks/useControlPointDrag";

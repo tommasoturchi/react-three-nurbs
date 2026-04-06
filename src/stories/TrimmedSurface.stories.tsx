@@ -9,7 +9,7 @@ import { NurbsCurve as NurbsCurveCore, NurbsSurface as NurbsSurfaceCore } from "
 import { sampleNurbsCurve2D } from "../utils/nurbs";
 
 const meta = {
-  title: "Components/TrimmedSurface",
+  title: "Surfaces/TrimmedSurface",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

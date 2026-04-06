@@ -6,7 +6,7 @@ import { SweptSurface } from "../components/SweptSurface";
 import { NurbsCurve } from "../components/NurbsCurve";
 
 const meta = {
-  title: "Components/SweptSurface",
+  title: "Surfaces/SweptSurface",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

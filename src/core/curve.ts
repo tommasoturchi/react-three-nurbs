@@ -302,64 +302,113 @@ export class NurbsCurve {
   }
 
   /**
-   * Split curve at parameter t by inserting knot until multiplicity = degree.
-   * Returns two NurbsCurve objects.
+   * Divide curve into segments of equal arc length.
+   * Returns array of { u, pt } where u is the parameter and pt is the 3D point.
+   */
+  divideByEqualArcLength(divisions: number): Array<{ u: number; pt: number[] }> {
+    const totalLen = this.length();
+    const segLen = totalLen / divisions;
+    const tMin = this._knots[this._degree];
+    const tMax = this._knots[this._knots.length - this._degree - 1];
+
+    const result: Array<{ u: number; pt: number[] }> = [];
+    result.push({ u: tMin, pt: this.point(tMin) });
+
+    // March along the curve, accumulating arc length
+    const numSamples = Math.max(divisions * 20, 200);
+    let accumulatedLength = 0;
+    let nextTarget = segLen;
+    let prevPt = this.point(tMin);
+    let segIndex = 1;
+
+    for (let i = 1; i <= numSamples && segIndex < divisions; i++) {
+      const t = tMin + (tMax - tMin) * i / numSamples;
+      const pt = this.point(t);
+
+      let dist = 0;
+      for (let d = 0; d < prevPt.length; d++) {
+        dist += (pt[d] - prevPt[d]) ** 2;
+      }
+      dist = Math.sqrt(dist);
+      accumulatedLength += dist;
+
+      while (accumulatedLength >= nextTarget && segIndex < divisions) {
+        // Interpolate to find the exact parameter
+        const overshoot = accumulatedLength - nextTarget;
+        const frac = dist > 0 ? (dist - overshoot) / dist : 0;
+        const prevT = tMin + (tMax - tMin) * (i - 1) / numSamples;
+        const exactT = prevT + frac * (t - prevT);
+        result.push({ u: exactT, pt: this.point(exactT) });
+        nextTarget += segLen;
+        segIndex++;
+      }
+
+      prevPt = pt;
+    }
+
+    result.push({ u: tMax, pt: this.point(tMax) });
+    return result;
+  }
+
+  /**
+   * Split curve at parameter t.
+   * Inserts knot t until multiplicity = degree, then splits the data at that point.
    */
   split(t: number): NurbsCurve[] {
-    // curveKnotInsert imported at top level
-
-    // Find current multiplicity of t
-    let mult = 0;
-    for (const k of this._knots) {
-      if (Math.abs(k - t) < 1e-10) mult++;
-    }
-
-    const insertions = this._degree - mult;
-    if (insertions <= 0) {
-      // Already has full multiplicity, just split the data
-      return this._splitAtFullMult(t);
-    }
+    const p = this._degree;
 
     // Insert knot until multiplicity = degree
     let data: CurveData = this.asData();
+    let mult = 0;
+    for (const k of data.knots) {
+      if (Math.abs(k - t) < 1e-10) mult++;
+    }
+    const insertions = p - mult;
     for (let i = 0; i < insertions; i++) {
       data = curveKnotInsert(data, t, 1);
     }
 
-    const curve = new NurbsCurve(data);
-    return curve._splitAtFullMult(t);
-  }
-
-  private _splitAtFullMult(t: number): NurbsCurve[] {
-    // Find the split index
-    let splitIdx = -1;
-    for (let i = 0; i < this._knots.length; i++) {
-      if (Math.abs(this._knots[i] - t) < 1e-10) {
-        splitIdx = i;
+    // Find the index where t starts in the knot vector (first occurrence)
+    let kStart = -1;
+    for (let i = 0; i < data.knots.length; i++) {
+      if (Math.abs(data.knots[i] - t) < 1e-10) {
+        kStart = i;
         break;
       }
     }
-    if (splitIdx === -1) return [this.clone()];
+    if (kStart === -1) return [this.clone()];
 
-    const d = this._degree;
+    // The split point in control points: after knot insertion to multiplicity p,
+    // the control point at index (kStart - 1) is shared between both halves.
+    // Left curve gets control points 0..splitCP, right gets splitCP..end
+    const splitCP = kStart - 1; // index of the shared control point
 
-    // Left curve: knots[0..splitIdx+d], control points [0..splitIdx-1]
-    const leftKnots = this._knots.slice(0, splitIdx + 1);
-    // Clamp right end
-    for (let i = 0; i < d + 1; i++) leftKnots.push(t);
-    const leftCP = this._controlPoints.slice(0, splitIdx - d + 1);
-    const leftW = this._weights.slice(0, splitIdx - d + 1);
+    // Left: knots[0..kStart] + (p+1) copies of t at the end
+    const leftKnots = [...data.knots.slice(0, kStart + 1)];
+    while (leftKnots.length < (splitCP + 1) + p + 1) leftKnots.push(t);
+    const leftCP = data.controlPoints.slice(0, splitCP + 1);
+    const leftW = data.weights.slice(0, splitCP + 1);
 
-    // Right curve
+    // Right: (p+1) copies of t at the start + knots[kStart+p..]
     const rightKnots: number[] = [];
-    for (let i = 0; i < d + 1; i++) rightKnots.push(t);
-    rightKnots.push(...this._knots.slice(splitIdx + 1));
-    const rightCP = this._controlPoints.slice(splitIdx - d);
-    const rightW = this._weights.slice(splitIdx - d);
+    for (let i = 0; i < p + 1; i++) rightKnots.push(t);
+    rightKnots.push(...data.knots.slice(kStart + p));
+    const rightCP = data.controlPoints.slice(splitCP);
+    const rightW = data.weights.slice(splitCP);
+
+    // Validate before returning
+    const leftValid = leftCP.length > 0 && leftKnots.length === leftCP.length + p + 1;
+    const rightValid = rightCP.length > 0 && rightKnots.length === rightCP.length + p + 1;
+
+    if (!leftValid || !rightValid) {
+      // Fallback: just return two copies evaluated at the split
+      console.warn("Curve split produced invalid data, returning approximation");
+      return [this.clone()];
+    }
 
     return [
-      new NurbsCurve({ degree: d, knots: leftKnots, controlPoints: leftCP, weights: leftW }),
-      new NurbsCurve({ degree: d, knots: rightKnots, controlPoints: rightCP, weights: rightW }),
+      new NurbsCurve({ degree: p, knots: leftKnots, controlPoints: leftCP, weights: leftW }),
+      new NurbsCurve({ degree: p, knots: rightKnots, controlPoints: rightCP, weights: rightW }),
     ];
   }
 

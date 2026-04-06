@@ -137,6 +137,112 @@ export function createCircle(
   return createArc(center, xaxis, yaxis, radius, 0, 2 * Math.PI);
 }
 
+/**
+ * Create a NURBS elliptical arc.
+ * xaxis and yaxis define the semi-axes (their lengths are the radii).
+ */
+export function createEllipseArc(
+  center: number[],
+  xaxis: number[],
+  yaxis: number[],
+  startAngle: number,
+  endAngle: number
+): CurveData {
+  const rx = vecLength(xaxis);
+  const ry = vecLength(yaxis);
+  const X = vecNormalize(xaxis);
+  const Y = vecNormalize(yaxis);
+
+  let theta = endAngle - startAngle;
+  if (theta < 0) theta += 2 * Math.PI;
+
+  let narcs: number;
+  if (theta <= Math.PI / 2) narcs = 1;
+  else if (theta <= Math.PI) narcs = 2;
+  else if (theta <= 3 * Math.PI / 2) narcs = 3;
+  else narcs = 4;
+
+  const dtheta = theta / narcs;
+  const w1 = Math.cos(dtheta / 2);
+
+  let P0 = vecAdd(center, vecAdd(vecScale(X, rx * Math.cos(startAngle)), vecScale(Y, ry * Math.sin(startAngle))));
+  let T0 = vecAdd(vecScale(X, -rx * Math.sin(startAngle)), vecScale(Y, ry * Math.cos(startAngle)));
+
+  const controlPoints: number[][] = [P0];
+  const weights: number[] = [1];
+
+  let angle = startAngle;
+  for (let i = 0; i < narcs; i++) {
+    angle += dtheta;
+    const P2 = vecAdd(center, vecAdd(vecScale(X, rx * Math.cos(angle)), vecScale(Y, ry * Math.sin(angle))));
+    const T2 = vecAdd(vecScale(X, -rx * Math.sin(angle)), vecScale(Y, ry * Math.cos(angle)));
+
+    const dP = vecSub(P2, P0);
+    const denom = T0[0] * T2[1] - T0[1] * T2[0];
+    let a: number;
+    if (Math.abs(denom) > 1e-14) {
+      a = (dP[0] * T2[1] - dP[1] * T2[0]) / denom;
+    } else {
+      const denom2 = T0[0] * T2[2] - T0[2] * T2[0];
+      if (Math.abs(denom2) > 1e-14) {
+        a = (dP[0] * T2[2] - dP[2] * T2[0]) / denom2;
+      } else {
+        a = (dP[1] * T2[2] - dP[2] * T2[1]) / (T0[1] * T2[2] - T0[2] * T2[1]);
+      }
+    }
+    const P1 = vecAdd(P0, vecScale(T0, a));
+
+    controlPoints.push(P1, P2);
+    weights.push(w1, 1);
+
+    P0 = P2;
+    T0 = T2;
+  }
+
+  const knots: number[] = [];
+  knots.push(0, 0, 0);
+  for (let i = 1; i < narcs; i++) {
+    const knotVal = i / narcs;
+    knots.push(knotVal, knotVal);
+  }
+  knots.push(1, 1, 1);
+
+  return { degree: 2, knots, controlPoints, weights };
+}
+
+/**
+ * Create a full NURBS ellipse.
+ */
+export function createEllipse(
+  center: number[],
+  xaxis: number[],
+  yaxis: number[]
+): CurveData {
+  return createEllipseArc(center, xaxis, yaxis, 0, 2 * Math.PI);
+}
+
+/**
+ * Create a cylindrical surface.
+ */
+export function createCylindricalSurface(
+  axis: number[],
+  xaxis: number[],
+  base: number[],
+  height: number,
+  radius: number
+): SurfaceData {
+  const axisNorm = vecNormalize(axis);
+  const xNorm = vecNormalize(xaxis);
+  const yNorm = vecCross(axisNorm, xNorm);
+
+  // Circle at base, extruded along axis
+  const bottomCircle = createArc(base, xNorm, yNorm, radius, 0, 2 * Math.PI);
+
+  // Extrude along axis
+  const direction = vecScale(axisNorm, height);
+  return createExtrudedSurface(bottomCircle, direction);
+}
+
 // --- Extruded Surface ---
 
 /**

@@ -4,7 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import { NurbsCurve } from "../components/NurbsCurve";
 
 const meta = {
-  title: "Components/NurbsCurve",
+  title: "Curves/NurbsCurve",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

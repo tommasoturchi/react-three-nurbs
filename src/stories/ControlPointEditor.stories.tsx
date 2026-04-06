@@ -10,7 +10,7 @@ import { useControlPointDrag } from "../hooks/useControlPointDrag";
 import { generateUniformKnots } from "../utils/nurbs";
 
 const meta = {
-  title: "Hooks/ControlPointEditor",
+  title: "Examples/Interactive Control Points",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

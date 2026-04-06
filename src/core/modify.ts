@@ -6,89 +6,78 @@
 import type { CurveData, SurfaceData } from "./types";
 
 /**
- * Insert a single knot u into a curve r times (Algorithm A5.1 — Boehm's algorithm).
+ * Insert a single knot u into a curve r times.
+ * Uses Boehm's algorithm, operating on control points and weights separately.
  */
 export function curveKnotInsert(
   curve: CurveData,
   u: number,
   r: number
 ): CurveData {
-  const { degree: p, knots: UP, controlPoints: Pw, weights: W } = curve;
-  const n = Pw.length - 1;
-  const dim = Pw[0].length;
-
-  // Find knot span and current multiplicity
-  let k = -1;
-  let s = 0; // current multiplicity
-  for (let i = 0; i < UP.length; i++) {
-    if (UP[i] <= u) k = i;
-    if (Math.abs(UP[i] - u) < 1e-14) s++;
+  let result = curve;
+  for (let i = 0; i < r; i++) {
+    result = insertSingleKnot(result, u);
   }
+  return result;
+}
 
-  if (r + s > p) r = p - s; // clamp
-  if (r <= 0) return { ...curve };
+/**
+ * Insert a single knot u once into a curve (Boehm's single knot insertion).
+ */
+function insertSingleKnot(curve: CurveData, u: number): CurveData {
+  const { degree: p, knots, controlPoints, weights } = curve;
+  const n = controlPoints.length - 1;
+  const dim = controlPoints[0].length;
 
-  // New knot vector
-  const newKnots = new Array(UP.length + r);
-  for (let i = 0; i <= k; i++) newKnots[i] = UP[i];
-  for (let i = 1; i <= r; i++) newKnots[k + i] = u;
-  for (let i = k + 1; i < UP.length; i++) newKnots[i + r] = UP[i];
-
-  // Work with homogeneous coordinates: [w*x, w*y, w*z, w]
-  const Rw: number[][] = new Array(p + 1);
-  const newPw: number[][] = new Array(n + r + 1);
-  const newW: number[] = new Array(n + r + 1);
-
-  // Copy unchanged control points
-  for (let i = 0; i <= k - p; i++) {
-    newPw[i] = [...Pw[i]];
-    newW[i] = W[i];
-  }
-  for (let i = k - s; i <= n; i++) {
-    newPw[i + r] = [...Pw[i]];
-    newW[i + r] = W[i];
-  }
-
-  // Copy affected control points to Rw (homogeneous)
-  for (let i = 0; i <= p - s; i++) {
-    const idx = k - p + 1 + i;
-    Rw[i] = Pw[idx].map(v => v * W[idx]);
-    Rw[i].push(W[idx]); // append weight as extra coord
-  }
-
-  // Insert knot r times
-  let L = 0;
-  for (let j = 1; j <= r; j++) {
-    L = k - p + j;
-    for (let i = 0; i <= p - j - s; i++) {
-      const alpha = (u - UP[L + i]) / (UP[i + k + 1] - UP[L + i]);
-      const newRw = new Array(dim + 1);
-      for (let d = 0; d <= dim; d++) {
-        newRw[d] = alpha * Rw[i + 1][d] + (1 - alpha) * Rw[i][d];
-      }
-      Rw[i] = newRw;
+  // Find knot span: k such that knots[k] <= u < knots[k+1]
+  let k = p;
+  for (let i = 0; i < knots.length - 1; i++) {
+    if (knots[i] <= u && u < knots[i + 1]) {
+      k = i;
+      break;
     }
-    // Extract from homogeneous
-    const wL = Rw[0][dim];
-    newPw[L] = Rw[0].slice(0, dim).map(v => wL !== 0 ? v / wL : v);
-    newW[L] = wL;
-
-    const wR = Rw[p - j - s][dim];
-    newPw[k + r - j - s] = Rw[p - j - s].slice(0, dim).map(v => wR !== 0 ? v / wR : v);
-    newW[k + r - j - s] = wR;
+  }
+  // Handle u at upper boundary
+  if (u >= knots[knots.length - p - 1]) {
+    k = knots.length - p - 2;
   }
 
-  // Copy remaining
-  for (let i = L + 1; i < k - s; i++) {
-    const wI = Rw[i - L][dim];
-    newPw[i] = Rw[i - L].slice(0, dim).map(v => wI !== 0 ? v / wI : v);
-    newW[i] = wI;
+  // New knot vector: insert u between knots[k] and knots[k+1]
+  const newKnots = [...knots.slice(0, k + 1), u, ...knots.slice(k + 1)];
+
+  // New control points: n+2 points
+  const newCP: number[][] = new Array(n + 2);
+  const newW: number[] = new Array(n + 2);
+
+  for (let i = 0; i <= n + 1; i++) {
+    if (i <= k - p) {
+      // Before affected region: copy unchanged
+      newCP[i] = [...controlPoints[i]];
+      newW[i] = weights[i];
+    } else if (i >= k + 1) {
+      // After affected region: shift from old array
+      newCP[i] = [...controlPoints[i - 1]];
+      newW[i] = weights[i - 1];
+    } else {
+      // Affected region: blend neighbors
+      const alpha = (u - knots[i]) / (knots[i + p] - knots[i]);
+      const w0 = weights[i - 1];
+      const w1 = weights[i];
+      // Blend in homogeneous coordinates
+      const newWeight = (1 - alpha) * w0 + alpha * w1;
+      const pt = new Array(dim);
+      for (let d = 0; d < dim; d++) {
+        pt[d] = ((1 - alpha) * w0 * controlPoints[i - 1][d] + alpha * w1 * controlPoints[i][d]) / newWeight;
+      }
+      newCP[i] = pt;
+      newW[i] = newWeight;
+    }
   }
 
   return {
     degree: p,
     knots: newKnots,
-    controlPoints: newPw,
+    controlPoints: newCP,
     weights: newW,
   };
 }

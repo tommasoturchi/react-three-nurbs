@@ -155,3 +155,25 @@ describe("NurbsCurve", () => {
     });
   });
 });
+
+describe("split", () => {
+  it("splits a curve and both halves evaluate correctly", () => {
+    const c = NurbsCurve.byKnotsControlPointsWeights(
+      2,
+      [0, 0, 0, 0.5, 1, 1, 1],
+      [[0, 0, 0], [1, 2, 0], [2, 0, 0], [3, 1, 0]],
+      [1, 1, 1, 1]
+    );
+    const [left, right] = c.split(0.4);
+    
+    // Left should start at original start
+    const l0 = left.point(0);
+    expect(l0[0]).toBeCloseTo(0, 2);
+    expect(l0[1]).toBeCloseTo(0, 2);
+    
+    // Right should end at original end
+    const r1 = right.point(1);
+    expect(r1[0]).toBeCloseTo(3, 1);
+    expect(r1[1]).toBeCloseTo(1, 1);
+  });
+});

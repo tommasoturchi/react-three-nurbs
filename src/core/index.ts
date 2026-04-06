@@ -15,6 +15,9 @@ export { globalCurveInterpolation, loftSurface } from "./fit";
 export {
   createArc,
   createCircle,
+  createEllipseArc,
+  createEllipse,
+  createCylindricalSurface,
   createExtrudedSurface,
   createRevolvedSurface,
   createSweptSurface,

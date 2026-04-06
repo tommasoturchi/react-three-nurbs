@@ -54,7 +54,8 @@ export const InterpolatedSurface = forwardRef<Mesh, InterpolatedSurfaceProps>(
     const geometry = useMemo(() => {
       if (!geoData) return null;
 
-      const geo = geometryRef.current ?? new BufferGeometry();
+      if (geometryRef.current) geometryRef.current.dispose();
+      const geo = new BufferGeometry();
       geo.setAttribute("position", new Float32BufferAttribute(geoData.vertices, 3));
       geo.setAttribute("normal", new Float32BufferAttribute(geoData.normals, 3));
       geo.setAttribute("uv", new Float32BufferAttribute(geoData.uvs, 2));

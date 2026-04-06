@@ -123,7 +123,11 @@ export const NurbsSurface = forwardRef<Mesh, NurbsSurfaceProps>(function NurbsSu
         }
       }
 
-      const geo = geometryRef.current ?? new BufferGeometry();
+      // Dispose old geometry to avoid stale attribute caches
+      if (geometryRef.current) {
+        geometryRef.current.dispose();
+      }
+      const geo = new BufferGeometry();
       geo.setAttribute("position", new Float32BufferAttribute(positions, 3));
       if (normals) {
         geo.setAttribute("normal", new Float32BufferAttribute(normals, 3));

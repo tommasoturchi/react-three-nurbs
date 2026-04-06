@@ -6,7 +6,7 @@ import { CoonsPatch } from "../components/CoonsPatch";
 import { NurbsCurve } from "../components/NurbsCurve";
 
 const meta = {
-  title: "Components/CoonsPatch",
+  title: "Surfaces/CoonsPatch",
   parameters: {
     layout: "centered",
     docs: {

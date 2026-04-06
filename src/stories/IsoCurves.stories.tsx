@@ -7,7 +7,7 @@ import { IsoCurves } from "../components/IsoCurves";
 import { useNurbsSurface } from "../hooks/useNurbsSurface";
 
 const meta = {
-  title: "Components/IsoCurves",
+  title: "Surfaces/IsoCurves",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

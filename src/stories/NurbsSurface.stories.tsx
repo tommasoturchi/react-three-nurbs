@@ -5,7 +5,7 @@ import { DoubleSide } from "three";
 import { NurbsSurface } from "../components/NurbsSurface";
 
 const meta = {
-  title: "Components/NurbsSurface",
+  title: "Surfaces/NurbsSurface",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

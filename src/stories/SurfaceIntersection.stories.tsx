@@ -8,7 +8,7 @@ import { NurbsSurface } from "../components/NurbsSurface";
 import { generateUniformKnots } from "../utils/nurbs";
 
 const meta = {
-  title: "Components/SurfaceIntersection",
+  title: "Examples/Surface Intersection",
   parameters: {
     layout: "centered",
     docs: {
