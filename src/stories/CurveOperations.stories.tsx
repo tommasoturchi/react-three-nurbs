@@ -116,8 +116,8 @@ export const EqualArcLengthDivision = {
 
 // === Curve Intersection ===
 function CurveIntersectionDemo() {
-  const pts1 = [[-3, -1, 0], [0, 3, 0], [3, -1, 0]];
-  const pts2 = [[-3, 1, 0], [0, -3, 0], [3, 1, 0]];
+  const pts1 = useMemo(() => [[-3, -1, 0], [0, 3, 0], [3, -1, 0]], []);
+  const pts2 = useMemo(() => [[-3, 1, 0], [0, -3, 0], [3, 1, 0]], []);
 
   const intersections = useMemo(() => {
     const c1 = NurbsCurveCore.byPoints(pts1, 2);
@@ -140,7 +140,7 @@ function CurveIntersectionDemo() {
       }
     }
     return results;
-  }, []);
+  }, [pts1, pts2]);
 
   return (
     <>
