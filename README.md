@@ -378,7 +378,6 @@ import {
   unifyCurveKnots,          // (curves) => NurbsCurve[]
   validateControlPoints,    // (cp, degreeU, degreeV) => string | null
   validateKnots,            // (knots, numCP, degree) => string | null
-  isMaterialElement,        // (child) => boolean
 } from 'react-three-nurbs'
 ```
 

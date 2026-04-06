@@ -46,7 +46,6 @@ export {
   validateDegree,
 } from "./utils/validation";
 
-export { isMaterialElement } from "./utils/materials";
 
 export {
   curveKnotRefine,
