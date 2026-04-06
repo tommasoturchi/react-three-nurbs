@@ -37,11 +37,16 @@ const throughPoints = [
 function ClosestPointDemo({ numTestPoints = 8 }: Record<string, any>) {
   const data = useMemo(() => {
     const curve = NurbsCurveCore.byPoints(throughPoints, 3);
-    const testPoints = Array.from({ length: numTestPoints }, (_, i) => [
-      -3 + (i / (numTestPoints - 1)) * 8,
-      3 * Math.sin(i * 1.5),
-      2 * Math.cos(i * 0.7),
-    ]);
+    // Spread test points in a grid-like pattern around the curve's bounding area
+    const testPoints = Array.from({ length: numTestPoints }, (_, i) => {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      return [
+        -2 + (i / (numTestPoints - 1)) * 8,
+        -3 + col * 3,
+        -2 + row * 1.5,
+      ];
+    });
     const lines: { from: Vector3; to: Vector3 }[] = [];
     const closestPts: Vector3[] = [];
     for (const tp of testPoints) {
