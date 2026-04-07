@@ -21,11 +21,12 @@
     }
   },
   "scripts": {
-    "dev": "storybook dev -p 6006",
+    "dev": "npm run setup:occt && storybook dev -p 6006",
     "build": "tsc && vite build",
     "lint": "eslint .",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "storybook": "npm run setup:occt && storybook dev -p 6006",
+    "build-storybook": "npm run setup:occt && storybook build",
+    "setup:occt": "mkdir -p public && cp -f src/occt/occtBooleans.wasm public/ 2>/dev/null || true",
     "test": "vitest",
     "test:run": "vitest run",
     "prepublishOnly": "npm run build",
