@@ -561,6 +561,31 @@ const sphere = NurbsSolid.makeSphere(1)
 </NurbsSolidComponent>
 ```
 
+### Solid Construction from Curves & Surfaces
+
+Build solids from existing curves and surfaces:
+
+```tsx
+import { NurbsSolid, NurbsCurve, createCircle } from 'react-three-nurbs'
+
+// Revolve a profile curve around an axis (like a lathe)
+const vaseProfile = NurbsCurve.byKnotsControlPointsWeights(3, knots, profilePoints, weights)
+const vase = NurbsSolid.fromRevolution(vaseProfile.asData(), [0,0,0], [0,1,0], Math.PI * 2)
+
+// Extrude a closed curve along a direction (like pushing Play-Doh)
+const circle = createCircle([0,0,0], [1,0,0], [0,1,0], 0.8)
+const tube = NurbsSolid.fromExtrusion(circle, [0, 0, 2], true) // capped = true
+
+// Thicken a surface into a shell (adds wall thickness)
+const shell = NurbsSolid.fromSurface(surfaceData, 0.2)
+
+// Wrap any surface as a solid face for manual composition
+const face = NurbsSolid.faceFromSurface(surfaceData, 'forward')
+const custom = NurbsSolid.fromFaces([face1, face2, face3])
+```
+
+Both `fromRevolution` and `fromExtrusion` accept an optional `capped` parameter (default `false`) to close partial revolutions or extrusion ends.
+
 ### Boolean Operations
 
 Union, difference, and intersection between solids using OpenCASCADE WASM (~5 MB, lazy-loaded on first use):
@@ -607,8 +632,11 @@ const pt = surface.point(0.5, 0.5)
 const normal = surface.normal(0.5, 0.5)
 const isoCurve = surface.isocurve(0.5, false)
 
-const solid = NurbsSolid.makeBox(2, 1, 3)  // 6 planar faces
-const faces = solid.faces()                  // FaceData[]
+const solid = NurbsSolid.makeBox(2, 1, 3)       // 6 planar faces
+const revolved = NurbsSolid.fromRevolution(curveData, center, axis, angle)
+const extruded = NurbsSolid.fromExtrusion(curveData, direction, capped)
+const shell = NurbsSolid.fromSurface(surfaceData, thickness)
+const faces = solid.faces()                      // FaceData[]
 ```
 
 ## Boolean Operations (OpenCASCADE)
