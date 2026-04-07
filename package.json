@@ -4,7 +4,10 @@
   "version": "0.3.1",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "src/occt/occtBooleans.js",
+    "src/occt/occtBooleans.wasm",
+    "src/occt/occtBooleans.d.ts"
   ],
   "author": "Tommaso Turchi",
   "license": "MIT",

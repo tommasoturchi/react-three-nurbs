@@ -17,6 +17,8 @@ export { OffsetCurve } from "./components/OffsetCurve";
 export { NurbsEllipse } from "./components/NurbsEllipse";
 export { NurbsEllipseArc } from "./components/NurbsEllipseArc";
 export { CylindricalSurface } from "./components/CylindricalSurface";
+export { NurbsSolidComponent } from "./components/NurbsSolidComponent";
+export { BooleanResult } from "./components/BooleanResult";
 
 // Hooks
 export { useNurbsCurve } from "./hooks/useNurbsCurve";
@@ -26,6 +28,12 @@ export { useSurfaceIntersection } from "./hooks/useSurfaceIntersection";
 export { useInterpolatedCurve } from "./hooks/useInterpolatedCurve";
 export { useInterpolatedSurface } from "./hooks/useInterpolatedSurface";
 export { useOffsetCurve } from "./hooks/useOffsetCurve";
+export { useNurbsSolid } from "./hooks/useNurbsSolid";
+export { useBooleanOperation } from "./hooks/useBooleanOperation";
+
+// OCCT (lazy-loaded)
+export { getOC, setOC, isOCLoaded } from "./occt/loader";
+export { booleanOperation } from "./occt/boolean";
 
 // Utilities
 export {
@@ -82,3 +90,8 @@ export type { UseSurfaceIntersectionOptions, UseSurfaceIntersectionResult, Surfa
 export type { UseInterpolatedCurveOptions, UseInterpolatedCurveResult } from "./hooks/useInterpolatedCurve";
 export type { UseInterpolatedSurfaceOptions, UseInterpolatedSurfaceResult } from "./hooks/useInterpolatedSurface";
 export type { UseOffsetCurveOptions, UseOffsetCurveResult } from "./hooks/useOffsetCurve";
+export type { NurbsSolidProps } from "./components/NurbsSolidComponent";
+export type { UseNurbsSolidOptions, UseNurbsSolidResult, SolidPrimitive } from "./hooks/useNurbsSolid";
+export type { BooleanResultProps } from "./components/BooleanResult";
+export type { UseBooleanOperationOptions, UseBooleanOperationResult } from "./hooks/useBooleanOperation";
+export type { BooleanOperation, BooleanMeshResult, ShapeDescriptor } from "./occt/boolean";

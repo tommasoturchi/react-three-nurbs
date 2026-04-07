@@ -1,9 +1,10 @@
 // Core classes
 export { NurbsCurve } from "./curve";
 export { NurbsSurface } from "./surface";
+export { NurbsSolid } from "./solid";
 
 // Types
-export type { CurveData, SurfaceData } from "./types";
+export type { CurveData, SurfaceData, FaceData, SolidData } from "./types";
 
 // Basis functions
 export { findSpan, basisFunctions, derivBasisFunctions } from "./basis";
@@ -21,6 +22,9 @@ export {
   createExtrudedSurface,
   createRevolvedSurface,
   createSweptSurface,
+  createBoxSolid,
+  createCylinderSolid,
+  createSphereSolid,
 } from "./construct";
 
 // Modification

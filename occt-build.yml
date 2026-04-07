@@ -1,0 +1,83 @@
+mainBuild:
+  name: occtBooleans.js
+  bindings:
+    # Base classes needed by primitives and booleans
+    - symbol: BRepBuilderAPI_MakeShape
+    - symbol: BRepBuilderAPI_Command
+    - symbol: BRepAlgoAPI_BuilderAlgo
+    - symbol: BRepAlgoAPI_Algo
+    # Primitives
+    - symbol: BRepPrimAPI_MakeBox
+    - symbol: BRepPrimAPI_MakeCylinder
+    - symbol: BRepPrimAPI_MakeSphere
+    - symbol: BRepPrimAPI_MakeOneAxis
+    # Boolean operations
+    - symbol: BRepAlgoAPI_Fuse
+    - symbol: BRepAlgoAPI_Cut
+    - symbol: BRepAlgoAPI_Common
+    - symbol: BRepAlgoAPI_BooleanOperation
+    # Geometry (full hierarchy)
+    - symbol: Standard_Transient
+    - symbol: Geom_Geometry
+    - symbol: Geom_Curve
+    - symbol: Geom_BoundedCurve
+    - symbol: Geom_BSplineCurve
+    - symbol: Geom_Surface
+    - symbol: Geom_BoundedSurface
+    - symbol: Geom_BSplineSurface
+    - symbol: Geom_Surface
+    - symbol: Geom_Curve
+    - symbol: gp_Pnt
+    - symbol: gp_Vec
+    - symbol: gp_Dir
+    - symbol: gp_Ax1
+    - symbol: gp_Ax2
+    - symbol: gp_Ax3
+    - symbol: gp_Trsf
+    # Arrays
+    - symbol: TColgp_Array1OfPnt
+    - symbol: TColgp_Array2OfPnt
+    - symbol: TColStd_Array1OfReal
+    - symbol: TColStd_Array1OfInteger
+    - symbol: TColStd_Array2OfReal
+    # Face/Solid building
+    - symbol: BRepBuilderAPI_MakeFace
+    - symbol: BRepBuilderAPI_MakeWire
+    - symbol: BRepBuilderAPI_MakeEdge
+    - symbol: BRepBuilderAPI_MakeSolid
+    - symbol: BRepBuilderAPI_Sewing
+    - symbol: BRep_Builder
+    # Topology
+    - symbol: TopExp_Explorer
+    - symbol: TopoDS
+    - symbol: TopoDS_Shape
+    - symbol: TopoDS_Face
+    - symbol: TopoDS_Shell
+    - symbol: TopoDS_Solid
+    - symbol: TopoDS_Edge
+    - symbol: TopoDS_Wire
+    - symbol: TopoDS_Compound
+    - symbol: TopAbs_ShapeEnum
+    # Geometry extraction
+    - symbol: BRep_Tool
+    - symbol: BRepTools
+    - symbol: BRepMesh_DiscretRoot
+    - symbol: BRepMesh_IncrementalMesh
+    # Tessellation
+    - symbol: TopLoc_Location
+    - symbol: Poly_Triangulation
+    - symbol: Poly_Triangle
+    - symbol: Handle_Poly_Triangulation
+    - symbol: Handle_Geom_Surface
+    # Progress
+    - symbol: Message_ProgressRange
+  emccFlags:
+    - -O3
+    - -flto
+    - -sDISABLE_EXCEPTION_CATCHING=1
+    - -sEXPORT_ES6=1
+    - -sUSE_ES6_IMPORT_META=0
+    - -sEXPORTED_RUNTIME_METHODS=['FS']
+    - -sINITIAL_MEMORY=32MB
+    - -sALLOW_MEMORY_GROWTH=1
+    - -sMAXIMUM_MEMORY=256MB

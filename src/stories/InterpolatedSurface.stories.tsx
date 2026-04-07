@@ -5,7 +5,7 @@ import { DoubleSide } from "three";
 import { InterpolatedSurface } from "../components/InterpolatedSurface";
 
 const meta = {
-  title: "Surfaces/InterpolatedSurface",
+  title: "Surfaces/Interpolated Surface",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

@@ -8,7 +8,7 @@ import { NurbsEllipseArc } from "../components/NurbsEllipseArc";
 import { NurbsCurve } from "../components/NurbsCurve";
 
 const meta = {
-  title: "Examples/Exact Conics (Circle, Arc, Ellipse)",
+  title: "Curves/Conics Gallery",
   parameters: {
     layout: "centered",
     docs: {

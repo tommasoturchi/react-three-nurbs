@@ -7,7 +7,7 @@ import { NurbsCurve as NurbsCurveCore } from "../core";
 import { InterpolatedCurve } from "../components/InterpolatedCurve";
 
 const meta = {
-  title: "Examples/Curve Operations",
+  title: "Curves/Operations",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

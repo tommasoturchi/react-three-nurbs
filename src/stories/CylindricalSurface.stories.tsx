@@ -5,7 +5,7 @@ import { DoubleSide } from "three";
 import { CylindricalSurface } from "../components/CylindricalSurface";
 
 const meta = {
-  title: "Surfaces/CylindricalSurface",
+  title: "Surfaces/Cylindrical Surface",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

@@ -6,7 +6,7 @@ import { LoftedSurface } from "../components/LoftedSurface";
 import { NurbsCurve } from "../components/NurbsCurve";
 
 const meta = {
-  title: "Surfaces/LoftedSurface",
+  title: "Surfaces/Lofted Surface",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

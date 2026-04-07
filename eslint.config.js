@@ -6,7 +6,7 @@ import * as tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
 export default [
-  { ignores: ["dist", "storybook-static", "**/*.d.ts"] },
+  { ignores: ["dist", "storybook-static", "**/*.d.ts", "src/occt/occtBooleans.*"] },
   js.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],

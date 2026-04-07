@@ -8,7 +8,7 @@ import { NurbsSurface } from "../components/NurbsSurface";
 import { useNurbsSurface } from "../hooks/useNurbsSurface";
 
 const meta = {
-  title: "Examples/Surface Operations",
+  title: "Surfaces/Operations",
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (

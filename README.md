@@ -1,14 +1,16 @@
 # react-three-nurbs
 
-A React component library for NURBS (Non-Uniform Rational B-Spline) curves and surfaces in Three.js. Built with React Three Fiber, zero external NURBS dependencies — all math implemented from scratch.
+A React component library for NURBS (Non-Uniform Rational B-Spline) curves, surfaces, and solids in Three.js. Built with React Three Fiber, zero external NURBS dependencies — all math implemented from scratch. Boolean operations powered by OpenCASCADE WASM.
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/tommasoturchi)
 
 ## Features
 
-- 15 components for curves, surfaces, and geometric operations
-- 7 hooks for using NURBS math without rendering
+- 20 components for curves, surfaces, solids, and geometric operations
+- 9 hooks for using NURBS math without rendering
 - Custom NURBS engine — no external math dependencies
+- Solid primitives (box, cylinder, sphere) with B-Rep data model
+- Boolean operations (union, difference, intersection) via OpenCASCADE WASM
 - Full TypeScript support with exported prop types
 - Interactive control point editing with drag handles
 - Point projection using NURBS Book Algorithm A6.1
@@ -223,6 +225,49 @@ import { NurbsCircle, NurbsArc } from 'react-three-nurbs'
 <NurbsArc center={[0, 0, 0]} radius={1} startAngle={0} endAngle={Math.PI} color="red" />
 ```
 
+### NurbsEllipse / NurbsEllipseArc
+
+Exact NURBS ellipse and elliptical arc primitives. Semi-axes are defined by the length of the `xaxis` and `yaxis` vectors.
+
+```tsx
+import { NurbsEllipse, NurbsEllipseArc } from 'react-three-nurbs'
+
+<NurbsEllipse
+  center={[0, 0, 0]}
+  xaxis={[2, 0, 0]}
+  yaxis={[0, 1, 0]}
+  color="blue"
+  lineWidth={2}
+/>
+<NurbsEllipseArc
+  center={[0, 0, 0]}
+  xaxis={[2, 0, 0]}
+  yaxis={[0, 1, 0]}
+  startAngle={0}
+  endAngle={Math.PI}
+  color="red"
+/>
+```
+
+### CylindricalSurface
+
+Creates a cylindrical NURBS surface from a base circle extruded along an axis.
+
+```tsx
+import { CylindricalSurface } from 'react-three-nurbs'
+
+<CylindricalSurface
+  axis={[0, 1, 0]}
+  base={[0, 0, 0]}
+  height={2}
+  radius={0.5}
+  resolutionU={30}
+  resolutionV={10}
+>
+  <meshStandardMaterial color="#ff8800" side={DoubleSide} />
+</CylindricalSurface>
+```
+
 ### IsoCurves
 
 Renders iso-parametric curves on a surface for visualization.
@@ -269,6 +314,70 @@ import { SurfaceIntersection, NurbsSurface } from 'react-three-nurbs'
   </NurbsSurface>
 </SurfaceIntersection>
 ```
+
+### NurbsSolidComponent
+
+Renders all faces of a NURBS solid as a single merged mesh. Accepts a `SolidData` object (from `NurbsSolid.asData()` or `useNurbsSolid`).
+
+```tsx
+import { NurbsSolidComponent, NurbsSolid } from 'react-three-nurbs'
+
+const box = NurbsSolid.makeBox(2, 1, 1)
+
+<NurbsSolidComponent
+  solid={box.asData()}
+  resolutionU={20}
+  resolutionV={20}
+  color="#4488ff"
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `solid` | `SolidData` | required | Solid data (array of oriented faces) |
+| `resolutionU` / `resolutionV` | `number` | `20` | Per-face tessellation resolution |
+| `color` | `string` | `'#4488ff'` | Default material color |
+| `wireframe` | `boolean` | `false` | Render as wireframe |
+
+### BooleanResult
+
+Performs a boolean operation (union, difference, intersection) between two shape descriptors using OpenCASCADE WASM and renders the resulting mesh. The WASM module (~5 MB) is lazy-loaded on first use.
+
+```tsx
+import { BooleanResult } from 'react-three-nurbs'
+import type { ShapeDescriptor } from 'react-three-nurbs'
+
+const box: ShapeDescriptor = { type: 'box', dx: 2, dy: 2, dz: 2, origin: [-1, -1, -1] }
+const cyl: ShapeDescriptor = { type: 'cylinder', radius: 0.8, height: 3, origin: [0, 0, -1.5] }
+
+<BooleanResult
+  shapeA={box}
+  shapeB={cyl}
+  operation="difference"
+  meshDeflection={0.05}
+  color="#ff4444"
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `shapeA` | `ShapeDescriptor \| null` | required | First operand |
+| `shapeB` | `ShapeDescriptor \| null` | required | Second operand |
+| `operation` | `BooleanOperation` | required | `'union'` \| `'difference'` \| `'intersection'` |
+| `meshDeflection` | `number` | `0.1` | Tessellation accuracy (lower = finer mesh) |
+| `color` | `string` | `'#4488ff'` | Default material color |
+| `wireframe` | `boolean` | `false` | Render as wireframe |
+
+The `ShapeDescriptor` type supports three primitive shapes:
+
+```tsx
+type ShapeDescriptor =
+  | { type: 'box'; dx: number; dy: number; dz: number; origin?: [number, number, number] }
+  | { type: 'cylinder'; radius: number; height: number; origin?: [number, number, number]; axis?: [number, number, number] }
+  | { type: 'sphere'; radius: number; center?: [number, number, number] }
+```
+
+> **Note:** Boolean operations require the OpenCASCADE WASM module (~5 MB), which is lazy-loaded via dynamic `import()` the first time a boolean operation is invoked. This keeps the base bundle small and avoids loading WASM for applications that only use curves and surfaces.
 
 ## Hooks
 
@@ -363,6 +472,59 @@ const { curve, points } = useOffsetCurve({
 })
 ```
 
+### useNurbsSolid
+
+Creates a NURBS solid primitive (box, cylinder, sphere, or custom faces) and returns the `NurbsSolid` instance along with its plain data.
+
+```tsx
+import { useNurbsSolid, NurbsSolidComponent } from 'react-three-nurbs'
+
+function MyBox() {
+  const { solid, data, faces } = useNurbsSolid({
+    primitive: { type: 'box', dx: 2, dy: 1, dz: 1 },
+  })
+
+  return data ? <NurbsSolidComponent solid={data} color="#4488ff" /> : null
+}
+```
+
+The `primitive` option accepts one of:
+
+```tsx
+type SolidPrimitive =
+  | { type: 'box'; dx: number; dy: number; dz: number; origin?: [number, number, number] }
+  | { type: 'cylinder'; radius: number; height: number; axis?: [number, number, number]; origin?: [number, number, number] }
+  | { type: 'sphere'; radius: number; center?: [number, number, number] }
+  | { type: 'custom'; faces: FaceData[] }
+```
+
+### useBooleanOperation
+
+Performs an async boolean operation between two `ShapeDescriptor` objects using OpenCASCADE WASM. Returns the tessellated mesh result, a loading flag, and any error.
+
+```tsx
+import { useBooleanOperation } from 'react-three-nurbs'
+import type { ShapeDescriptor } from 'react-three-nurbs'
+
+const box: ShapeDescriptor = { type: 'box', dx: 2, dy: 2, dz: 2 }
+const sphere: ShapeDescriptor = { type: 'sphere', radius: 1.2 }
+
+function MyBoolean() {
+  const { mesh, isComputing, error } = useBooleanOperation({
+    shapeA: box,
+    shapeB: sphere,
+    operation: 'intersection',
+    meshDeflection: 0.05,
+  })
+
+  if (isComputing) return <mesh><sphereGeometry args={[0.1]} /><meshBasicMaterial color="#888" wireframe /></mesh>
+  if (error || !mesh) return null
+
+  // mesh.vertices, mesh.normals, mesh.indices are typed arrays
+  // ready to be used with BufferGeometry
+}
+```
+
 ## Utilities
 
 ```tsx
@@ -381,14 +543,61 @@ import {
 } from 'react-three-nurbs'
 ```
 
+## Solids
+
+### NurbsSolid Primitives
+
+Create solid volumes from NURBS faces:
+
+```tsx
+import { NurbsSolid, NurbsSolidComponent } from 'react-three-nurbs'
+
+const box = NurbsSolid.makeBox(2, 1.5, 1)
+const cylinder = NurbsSolid.makeCylinder(0.5, 2)
+const sphere = NurbsSolid.makeSphere(1)
+
+<NurbsSolidComponent solid={box.asData()} resolutionU={10} resolutionV={10}>
+  <meshPhongMaterial color="#4488ff" side={DoubleSide} />
+</NurbsSolidComponent>
+```
+
+### Boolean Operations
+
+Union, difference, and intersection between solids using OpenCASCADE WASM (~5 MB, lazy-loaded on first use):
+
+```tsx
+import { BooleanResult } from 'react-three-nurbs'
+
+<BooleanResult
+  shapeA={{ type: "box", dx: 2, dy: 2, dz: 2, origin: [-1, -1, -1] }}
+  shapeB={{ type: "cylinder", radius: 0.5, height: 3, origin: [0, 0, -1.5], axis: [0, 0, 1] }}
+  operation="difference"
+>
+  <meshPhongMaterial color="#4488ff" side={DoubleSide} />
+</BooleanResult>
+```
+
+Or at the hook level:
+
+```tsx
+import { useBooleanOperation } from 'react-three-nurbs'
+
+const { mesh, isComputing, error } = useBooleanOperation({
+  shapeA: { type: "box", dx: 2, dy: 2, dz: 2 },
+  shapeB: { type: "sphere", radius: 1 },
+  operation: 'difference', // 'union' | 'difference' | 'intersection'
+})
+```
+
+Shape descriptors: `{ type: "box", dx, dy, dz, origin? }`, `{ type: "cylinder", radius, height, axis?, origin? }`, `{ type: "sphere", radius, center? }`.
+
 ## Core NURBS Engine
 
 The library includes a standalone NURBS math engine with no external dependencies:
 
 ```tsx
-import { NurbsCurve, NurbsSurface } from 'react-three-nurbs'
+import { NurbsCurve, NurbsSurface, NurbsSolid } from 'react-three-nurbs'
 
-// These are the same classes used internally by all components
 const curve = NurbsCurve.byKnotsControlPointsWeights(degree, knots, controlPoints, weights)
 const point = curve.point(0.5)
 const tangent = curve.tangent(0.5)
@@ -396,7 +605,39 @@ const tangent = curve.tangent(0.5)
 const surface = NurbsSurface.byKnotsControlPointsWeights(degreeU, degreeV, knotsU, knotsV, cp, w)
 const pt = surface.point(0.5, 0.5)
 const normal = surface.normal(0.5, 0.5)
-const isoCurve = surface.isocurve(0.5, false) // extract V-direction curve at u=0.5
+const isoCurve = surface.isocurve(0.5, false)
+
+const solid = NurbsSolid.makeBox(2, 1, 3)  // 6 planar faces
+const faces = solid.faces()                  // FaceData[]
+```
+
+## Boolean Operations (OpenCASCADE)
+
+Boolean operations (union, difference, intersection) use a custom OpenCASCADE WASM build (~5 MB). The WASM is **lazy-loaded** via dynamic `import()` the first time a boolean operation runs, keeping the base bundle small.
+
+```tsx
+import { booleanOperation } from 'react-three-nurbs'
+import type { ShapeDescriptor, BooleanMeshResult } from 'react-three-nurbs'
+
+const result: BooleanMeshResult = await booleanOperation(
+  { type: 'box', dx: 2, dy: 2, dz: 2 },
+  { type: 'cylinder', radius: 0.8, height: 3 },
+  'difference',
+  0.05 // meshDeflection
+)
+// result.vertices: Float32Array
+// result.indices:  Uint32Array
+// result.normals:  Float32Array
+```
+
+WASM loader utilities:
+
+```tsx
+import { getOC, setOC, isOCLoaded } from 'react-three-nurbs'
+
+await getOC()         // Load and return OCCT instance (cached after first call)
+setOC(myOCInstance)   // Provide your own OCCT instance
+isOCLoaded()          // Check if WASM is ready
 ```
 
 ## Development

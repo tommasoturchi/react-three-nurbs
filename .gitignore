@@ -33,3 +33,6 @@ tsconfig.tsbuildinfo
 storybook-static/
 
 .claude
+
+# OCCT Docker build outputs (committed copies are in src/occt/)
+occtBooleans.*

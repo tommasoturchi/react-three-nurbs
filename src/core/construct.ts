@@ -3,7 +3,7 @@
  * Implements algorithms from "The NURBS Book" Chapters 7-8.
  */
 
-import type { CurveData, SurfaceData } from "./types";
+import type { CurveData, SurfaceData, FaceData, SolidData } from "./types";
 
 // --- Vector helpers ---
 
@@ -384,5 +384,165 @@ export function createSweptSurface(
     knotsV: [...profile.knots],
     controlPoints: cp,
     weights: w,
+  };
+}
+
+// --- Solid Primitives ---
+
+/**
+ * Helper: create a planar (degree 1) surface from 4 corner points.
+ */
+function createPlanarFace(
+  p00: number[], p10: number[], p11: number[], p01: number[],
+  orientation: "forward" | "reversed" = "forward"
+): FaceData {
+  return {
+    surface: {
+      degreeU: 1,
+      degreeV: 1,
+      knotsU: [0, 0, 1, 1],
+      knotsV: [0, 0, 1, 1],
+      controlPoints: [[p00, p01], [p10, p11]],
+      weights: [[1, 1], [1, 1]],
+    },
+    orientation,
+  };
+}
+
+/**
+ * Create a box solid with 6 planar faces.
+ */
+export function createBoxSolid(
+  dx: number,
+  dy: number,
+  dz: number,
+  origin: [number, number, number] = [0, 0, 0]
+): SolidData {
+  const [ox, oy, oz] = origin;
+  // 8 corner points
+  const p000 = [ox, oy, oz];
+  const p100 = [ox + dx, oy, oz];
+  const p010 = [ox, oy + dy, oz];
+  const p110 = [ox + dx, oy + dy, oz];
+  const p001 = [ox, oy, oz + dz];
+  const p101 = [ox + dx, oy, oz + dz];
+  const p011 = [ox, oy + dy, oz + dz];
+  const p111 = [ox + dx, oy + dy, oz + dz];
+
+  return {
+    faces: [
+      // Bottom (z=0), normal pointing -Z
+      createPlanarFace(p000, p100, p110, p010, "reversed"),
+      // Top (z=dz), normal pointing +Z
+      createPlanarFace(p001, p101, p111, p011, "forward"),
+      // Front (y=0), normal pointing -Y
+      createPlanarFace(p000, p100, p101, p001, "reversed"),
+      // Back (y=dy), normal pointing +Y
+      createPlanarFace(p010, p110, p111, p011, "forward"),
+      // Left (x=0), normal pointing -X
+      createPlanarFace(p000, p010, p011, p001, "forward"),
+      // Right (x=dx), normal pointing +X
+      createPlanarFace(p100, p110, p111, p101, "reversed"),
+    ],
+  };
+}
+
+/**
+ * Create a cylinder solid: 1 cylindrical face + 2 circular disk caps.
+ */
+export function createCylinderSolid(
+  radius: number,
+  height: number,
+  axis: [number, number, number] = [0, 1, 0],
+  origin: [number, number, number] = [0, 0, 0]
+): SolidData {
+  const axisNorm = vecNormalize(axis);
+
+  // Find perpendicular vectors for local coordinate frame
+  const up = Math.abs(axisNorm[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const xaxis = vecNormalize(vecCross(axisNorm, up));
+  const yaxis = vecCross(axisNorm, xaxis);
+
+  // Cylindrical surface: circle extruded along axis
+  const bottomCircle = createArc(origin, xaxis, yaxis, radius, 0, 2 * Math.PI);
+  const direction = vecScale(axisNorm, height);
+  const cylSurface = createExtrudedSurface(bottomCircle, direction);
+
+  // Disk caps: revolve a radial line segment around the cylinder axis.
+  // A line from center to rim, revolved 360°, produces a perfect circular disk.
+  const topCenter = vecAdd(origin, direction);
+
+  // Bottom cap: line from center to rim point along xaxis
+  const bottomLine: CurveData = {
+    degree: 1,
+    knots: [0, 0, 1, 1],
+    controlPoints: [
+      [...origin],
+      vecAdd(origin, vecScale(xaxis, radius)),
+    ],
+    weights: [1, 1],
+  };
+  const bottomCapSurface = createRevolvedSurface(
+    bottomLine, origin, axisNorm, 2 * Math.PI
+  );
+
+  // Top cap: line from center to rim point along xaxis
+  const topLine: CurveData = {
+    degree: 1,
+    knots: [0, 0, 1, 1],
+    controlPoints: [
+      [...topCenter],
+      vecAdd(topCenter, vecScale(xaxis, radius)),
+    ],
+    weights: [1, 1],
+  };
+  const topCapSurface = createRevolvedSurface(
+    topLine, topCenter, axisNorm, 2 * Math.PI
+  );
+
+  return {
+    faces: [
+      { surface: cylSurface, orientation: "forward" },
+      { surface: bottomCapSurface, orientation: "reversed" },
+      { surface: topCapSurface, orientation: "forward" },
+    ],
+  };
+}
+
+/**
+ * Create a sphere solid: 1 revolved surface.
+ */
+export function createSphereSolid(
+  radius: number,
+  center: [number, number, number] = [0, 0, 0]
+): SolidData {
+  // Semicircle profile in the XY plane:
+  // Arc from (radius,0,0) through (0,radius,0) to (-radius,0,0)
+  // This profile, when revolved around Y, creates a sphere because:
+  // - Each point (x,y,0) has distance |x| from the Y axis → circle of radius |x|
+  // - The y coordinate stays fixed → the circles stack vertically
+  // Full semicircle from south pole (0,-R,0) through equator (R,0,0) to north pole (0,R,0)
+  // Start angle -π/2 (pointing down), end angle π/2 (pointing up)
+  const profileData = createArc(
+    center,
+    [1, 0, 0],    // xaxis
+    [0, 1, 0],    // yaxis
+    radius,
+    -Math.PI / 2, // start at south pole (0, -R, 0)
+    Math.PI / 2   // end at north pole (0, R, 0)
+  );
+
+  // Revolve around Y axis through the center
+  const sphereSurface = createRevolvedSurface(
+    profileData,
+    center,
+    [0, 1, 0],    // Y axis
+    2 * Math.PI
+  );
+
+  return {
+    faces: [
+      { surface: sphereSurface, orientation: "forward" },
+    ],
   };
 }

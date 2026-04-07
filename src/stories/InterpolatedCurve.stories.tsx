@@ -4,7 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import { InterpolatedCurve } from "../components/InterpolatedCurve";
 
 const meta = {
-  title: "Curves/InterpolatedCurve",
+  title: "Curves/Interpolated Curve",
   parameters: {
     layout: "centered",
     docs: {
