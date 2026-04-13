@@ -31,9 +31,8 @@ export { useOffsetCurve } from "./hooks/useOffsetCurve";
 export { useNurbsSolid } from "./hooks/useNurbsSolid";
 export { useBooleanOperation } from "./hooks/useBooleanOperation";
 
-// OCCT (lazy-loaded)
+// OCCT (lazy-loaded — import these directly from 'react-three-nurbs/occt' or use useBooleanOperation hook)
 export { getOC, setOC, isOCLoaded } from "./occt/loader";
-export { booleanOperation } from "./occt/boolean";
 
 // Utilities
 export {

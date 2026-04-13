@@ -22,6 +22,8 @@ export default defineConfig({
         "three",
         "@react-three/fiber",
         "@react-three/drei",
+        "fs",
+        "path",
       ],
       output: {
         globals: {
