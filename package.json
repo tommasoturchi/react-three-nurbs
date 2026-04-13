@@ -1,7 +1,7 @@
 {
   "name": "react-three-nurbs",
   "private": false,
-  "version": "0.4.2",
+  "version": "0.4.3",
   "type": "module",
   "files": [
     "dist",
@@ -22,7 +22,7 @@
   },
   "scripts": {
     "dev": "npm run setup:occt && storybook dev -p 6006",
-    "build": "tsc && tsc -p tsconfig.build.json && vite build",
+    "build": "tsc && vite build && tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "storybook": "npm run setup:occt && storybook dev -p 6006",
     "build-storybook": "npm run setup:occt && storybook build",
@@ -30,7 +30,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "prepublishOnly": "npm run build",
-    "preversion": "npm run lint"
+    "preversion": "npm run lint && npm run test:run",
+    "release": "npm run lint && npm run test:run && npm run build && npm publish"
   },
   "publishConfig": {
     "access": "public"
