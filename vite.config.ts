@@ -17,8 +17,8 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        "react",
-        "react-dom",
+        /^react($|\/)/,
+        /^react-dom($|\/)/,
         "three",
         "@react-three/fiber",
         "@react-three/drei",

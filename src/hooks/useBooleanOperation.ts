@@ -53,7 +53,8 @@ export function useBooleanOperation({
       }
     })();
 
-    return () => { abortRef.current++; };
+    const ref = abortRef;
+    return () => { ref.current++; };
   }, [shapeA, shapeB, operation, meshDeflection]);
 
   return { mesh, isComputing, error };
