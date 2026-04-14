@@ -9,6 +9,10 @@ import { NurbsSurface } from "./surface";
 export interface AdaptiveRefinementOptions {
   /** Maximum deviation from bilinear approximation before subdividing (world units). Default: 0.01 */
   tolerance?: number;
+  /** Maximum normal angle deviation before subdividing (radians). Default: undefined (disabled).
+   *  When set, subdivides cells where the surface normal at the midpoint deviates from the
+   *  interpolated corner normals by more than this angle. Verb-nurbs uses 0.025 rad (~1.4°). */
+  normalTolerance?: number;
   /** Minimum number of initial divisions in U. Default: 4 */
   minDivsU?: number;
   /** Minimum number of initial divisions in V. Default: 4 */
@@ -41,11 +45,16 @@ export function adaptiveTessellate(
 ): TessellationResult {
   const {
     tolerance = 0.01,
+    normalTolerance,
     minDivsU = 4,
     minDivsV = 4,
     maxDepth = 6,
     normals: computeNormals = true,
   } = options;
+
+  const useNormalRefinement = normalTolerance !== undefined && normalTolerance > 0;
+  // Precompute cosine threshold for normal-angle comparison (avoids acos per cell)
+  const cosNormalTol = useNormalRefinement ? Math.cos(normalTolerance) : 1;
 
   const vertices: Vertex[] = [];
   const indices: number[] = [];
@@ -98,13 +107,39 @@ export function adaptiveTessellate(
       0.25 * (p00[2] + p10[2] + p01[2] + p11[2]),
     ];
 
-    // Distance between actual and expected
+    // Positional deviation check
     const dx = actual[0] - expected[0];
     const dy = actual[1] - expected[1];
     const dz = actual[2] - expected[2];
     const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-    return dist > tolerance;
+    if (dist > tolerance) return true;
+
+    // Normal-angle deviation check
+    if (useNormalRefinement) {
+      try {
+        const nMid = surface.normal(uMid, vMid);
+        const nMidLen = Math.sqrt(nMid[0] ** 2 + nMid[1] ** 2 + nMid[2] ** 2);
+        if (nMidLen > 0) {
+          // Check against each corner normal — subdivide if any deviates too much
+          const corners: [number, number][] = [[u0, v0], [u1, v0], [u0, v1], [u1, v1]];
+          for (const [cu, cv] of corners) {
+            const nc = surface.normal(cu, cv);
+            const ncLen = Math.sqrt(nc[0] ** 2 + nc[1] ** 2 + nc[2] ** 2);
+            if (ncLen > 0) {
+              const cosAngle =
+                (nMid[0] * nc[0] + nMid[1] * nc[1] + nMid[2] * nc[2]) /
+                (nMidLen * ncLen);
+              if (cosAngle < cosNormalTol) return true;
+            }
+          }
+        }
+      } catch {
+        // Degenerate normal at boundary — skip this check
+      }
+    }
+
+    return false;
   }
 
   // Recursively subdivide a cell
