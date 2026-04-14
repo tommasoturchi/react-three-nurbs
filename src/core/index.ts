@@ -36,6 +36,10 @@ export {
   unifyCurveKnots,
 } from "./modify";
 
+// Tessellation
+export { adaptiveTessellate } from "./tessellate";
+export type { AdaptiveRefinementOptions, TessellationResult } from "./tessellate";
+
 // Intersection
 export { intersectSurfaces } from "./intersect";
 export type { IntersectionResult } from "./intersect";

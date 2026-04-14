@@ -45,6 +45,9 @@ export {
   projectCurveOntoSurface,
 } from "./utils/nurbs";
 
+export { adaptiveTessellate } from "./core/tessellate";
+export type { AdaptiveRefinementOptions, TessellationResult } from "./core/tessellate";
+
 export {
   validateControlPoints,
   validateKnots,
